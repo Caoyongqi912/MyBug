@@ -44,7 +44,46 @@ class User(Base):
     account = db.Column(db.String(20), comment="真实姓名")
     name = db.Column(db.String(20), unique=True, comment="用户名")
     password = db.Column(db.String(50), comment="密码")
-    gender = db.Column(db.Boolean, default=True, comment="性别")
-    admin = db.Column(db.Boolean, default=False, comment="管理员")
+    gender = db.Column(db.Enum(True, False), server_default=True, comment="性别")
+    admin = db.Column(db.Enum(True, False), server_default=True, default=False, comment="管理员")
     department = db.Column(db.Integer, db.ForeignKey("department.id"), nullable=True)
+
+    def __init__(self, account, name, password, gender, department, admin=None):
+        self.account = account
+        self.name = name
+        self.password = password
+        self.gender = gender
+        self.admin = admin
+        self.department = department
+
+
+class Bugs(Base):
+    __tablename__ = "bugs"
+    title = db.Column(db.String(100), index=True, comment="BUG标题")
+    level = db.Column(db.Enum(1, 2, 3, 4), comment='BUG严重等级')
+    priority = db.Column(db.Enum(1, 2, 3, 4), comment="BUG优先级")
+    status = db.Column(db.Enum("ACTIVE", "RESOLVED", "CLOSED"), comment="BUG状态")
+    confirmed = db.Column(db.Enum(True, False), comment="是否确认")
+    creater = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, comment="创建者")
+    updater = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="修改者")
+    assignedTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="指派给")
+    resolvedBy = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="解决者")
+    resolution = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="解决状态")
+    mailTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="指派给")
+    stepsBody = db.Column(db.TEXT, comment="步骤")
+
+    def __init__(self,title,level,priority,status,confirmed,creater,updater,assignedTo,resolvedBy,
+                 resolution,mailTo,stepsBody):
+        self.title = title
+        self.level = level
+        self.priority = priority
+        self.status = status
+        self.confirmed = confirmed
+        self.creater = creater
+        self.updater = updater
+        self.assignedTo = assignedTo
+        self.resolution = resolution
+        self.resolvedBy = resolvedBy
+        self.mailTo = mailTo
+        self.stepsBody = stepsBody
 

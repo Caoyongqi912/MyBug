@@ -30,5 +30,7 @@ def create_app(config_name="default"):
     # 设置跨域
     CORS(app, supperts_credentals=True)
 
-    return app
+    from .api import myBug
+    app.register_blueprint(myBug)
 
+    return app

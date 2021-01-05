@@ -11,6 +11,7 @@ from .Log import get_log
 
 log = get_log(__name__)
 
+
 class MyBugBaseQuery(BaseQuery):
 
     def filter_by(self, **kwargs):
@@ -20,15 +21,13 @@ class MyBugBaseQuery(BaseQuery):
         :return:
         """
 
-        kwargs.setdefault('status',1)
+        kwargs.setdefault('status', 1)
         return super().filter_by(**kwargs)
 
     def get_or_noFind(self, ident):
         rv = self.get(ident)
         if not rv:
-            abort(dict(code=1,data="",msg="id错误或不存在"))
+            abort(dict(code=1, data="", msg="id错误或不存在"))
         elif rv.status == 0:
-            abort(dict(code=1,data="",msg="id已删除"))
+            abort(dict(code=1, data="", msg="id已删除"))
         return rv
-
-

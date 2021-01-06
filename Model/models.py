@@ -43,6 +43,14 @@ class Base(db.Model):
             log.error(e)
             db.session.rollback()
 
+    def delete(self):
+        try:
+            db.session.delete(self)
+            db.session.commit()
+        except Exception as e:
+            log.error(e)
+            db.session.rollback()
+
     @classmethod
     def verify_name(cls, name):
         """同名校验"""
@@ -134,13 +142,13 @@ class Product(Base):
     __tabelname__ = "product"
     name = db.Column(db.String(50), unique=True, comment="产品名")
     # 所有解决方案
-    solutions = db.relationship("Solution", backref="product_solutions", lazy="dynamic")
+    solutions = db.relationship("Solution", backref=("product_solutions"), lazy="dynamic", cascade="save-update,delete")
     # 所有测试平台
-    platforms = db.relationship("Platform", backref="product_platforms", lazy="dynamic")
+    platforms = db.relationship("Platform", backref="product_platforms", lazy="dynamic",cascade="save-update,delete")
     # 所有版本
-    builds = db.relationship("Build", backref="product_builds", lazy="dynamic")
+    builds = db.relationship("Build", backref="product_builds", lazy="dynamic",cascade="save-update,delete")
     # 所有错误类型
-    errorTypes = db.relationship("ErrorType", backref="product_error_types", lazy="dynamic")
+    errorTypes = db.relationship("ErrorType", backref="product_error_types", lazy="dynamic",cascade="save-update,delete")
     # 所有bug
     bugs = db.relationship("Bugs", backref="product_bugs", lazy="dynamic")
 

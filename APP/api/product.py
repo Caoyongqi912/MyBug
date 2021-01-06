@@ -9,7 +9,7 @@ from flask import jsonify
 from APP.api import myBug
 from COMMENT.myRequestParser import MyRequestParser
 from COMMENT.Log import get_log
-from COMMENT.MyResponse import myResponse
+from COMMENT.myResponse import myResponse
 from Model.models import Product, Solution, Build, Platform, ErrorType
 from .errors_or_auth import is_admin
 from APP import auth, db
@@ -71,7 +71,7 @@ class ProductOpt(Resource):
                 ps = Product.query.get(pid)
                 if not ps:
                     return jsonify(myResponse(1, None, f"{pid}  错误或不存在"))
-                ps = [ps]
+                ps = [Product.get(pid)]
             else:
                 ps = Product.all()
             productInfo = [
@@ -88,6 +88,44 @@ class ProductOpt(Resource):
         except Exception as e:
             log.exception(e)
             return jsonify(dict(code=1, data="", err=f"错误:{str(e)}"))
+
+    @auth.login_required
+    @is_admin
+    def put(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("productName", type=str, required=True, location="json", help="error name")
+        parse.add_argument("productId", type=str, required=True, location="json", help="error name")
+
+        name = parse.parse_args().get("productName")
+        Id = parse.parse_args().get('productId')
+
+        pro = Product.get(Id)
+        Product.verify_name(name)
+        if not pro:
+            return jsonify(myResponse(1, None, f"{Id}  错误或不存在"))
+
+        else:
+            try:
+                pro.name = name
+                db.session.commit()
+                return jsonify(myResponse(0, name, "ok"))
+            except ErrorType as e:
+                log.error(f"{__class__} {e}")
+                db.session.rollback()
+                return jsonify(myResponse(0, None, e))
+
+    @auth.login_required
+    @is_admin
+    def delete(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
+
+        ID = parse.parse_args().get("productId")
+        try:
+            Product.get(ID).delete()
+            return jsonify(myResponse(0, None, "ok"))
+        except Exception as e:
+            return jsonify(myResponse(1, None, str(e)))
 
 
 api_script = Api(myBug)

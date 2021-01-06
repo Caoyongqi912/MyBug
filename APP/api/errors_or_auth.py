@@ -6,7 +6,6 @@
 
 from functools import wraps
 from flask import g, jsonify, make_response
-from flask_restful import abort
 from Model.models import User
 from . import myBug
 from .. import auth

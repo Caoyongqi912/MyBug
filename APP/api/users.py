@@ -9,11 +9,11 @@ from flask import jsonify, g
 from flask_restful import Resource, Api, reqparse
 from APP import auth
 from APP.api import myBug
-from COMMENT.MyResponse import myResponse
+from COMMENT.myResponse import myResponse
 from Model.models import User
 from COMMENT.Log import get_log
 from COMMENT.myRequestParser import MyRequestParser
-
+from COMMENT.myBlinker import login_signal
 log = get_log(__file__)
 
 
@@ -26,15 +26,14 @@ class Login(Resource):
 
         account = parse.parse_args().get("account")
         password = parse.parse_args().get("password")
-
-        log.info(f"{__class__}  account: {account}  password: {password}")
-
         user = User.query.filter(User.account == account).first()
         if user:
             res = user.verify_password(password)
             if res:
                 token = user.generate_auth_token().decode("ascii")
-                log.info(f"{__class__}  generateToken: {token}")
+                # 发送信号
+                login_signal.send(username=account)
+
                 return jsonify(myResponse(0, token, "ok"))
             else:
                 log.error(f"<{__class__}>  error password !")

@@ -2,7 +2,7 @@
 
 # @Time    : 2021/1/5 下午5:56
 # @Author  : cyq
-# @File    : MyResponse.py
+# @File    : myResponse.py
 
 
 def myResponse(code, data, msg):

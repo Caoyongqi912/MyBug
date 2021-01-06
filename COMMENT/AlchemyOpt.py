@@ -13,7 +13,6 @@ from .MyResponse import myResponse
 log = get_log(__name__)
 
 
-
 class MyBugBaseQuery(BaseQuery):
 
     def filter_by(self, **kwargs):
@@ -29,11 +28,9 @@ class MyBugBaseQuery(BaseQuery):
     def get_or_NoFound(self, ident):
         rv = self.get(ident)
         if not rv:
-            abort(400,description="err")
+            abort(400, **myResponse(0, None, "id 不存在"))
         elif rv.status == 0:
-            handelAbort("id已删除")
+            abort(400, **myResponse(0, None, "id 已删除"))
         return rv
 
-def handelAbort(msg):
-    abort(dict(code=1, data="", msg=msg))
 

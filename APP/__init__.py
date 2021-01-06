@@ -13,7 +13,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
 from flask_cors import CORS
 
-db = SQLAlchemy(model_class=MyBugBaseQuery)
+db = SQLAlchemy(query_class=MyBugBaseQuery)
 auth = HTTPBasicAuth()
 catch = Cache()
 

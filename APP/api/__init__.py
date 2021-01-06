@@ -8,4 +8,4 @@ from flask import blueprints
 
 myBug = blueprints.Blueprint("myBug", __name__, url_prefix="/api")
 
-from . import users
+from . import users, product

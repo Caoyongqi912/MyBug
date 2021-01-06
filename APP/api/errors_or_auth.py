@@ -41,7 +41,7 @@ def unauthorized():
 def verify_password_or_token(username_or_token, password):
     user = User.verify_token(token=username_or_token)
     if not user:
-        user = User.query.filter(User.username == username_or_token).first()
+        user = User.query.filter(User.account == username_or_token).first()
         if not user or not user.verify_password(password):
             return False
     g.user = user
@@ -65,5 +65,4 @@ def is_admin(func):
     return wrap_func
 
 
-def myResponse(code, data, msg):
-    return {"code": code, "data": data, "msg": msg}
+

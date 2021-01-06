@@ -7,9 +7,13 @@
 import time
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_restful import current_app
+from flask_restful import current_app, abort
 from sqlalchemy import desc
 from APP import db
+from COMMENT.Log import get_log
+from COMMENT.MyResponse import myResponse
+
+log = get_log(__file__)
 
 
 class Base(db.Model):
@@ -26,6 +30,25 @@ class Base(db.Model):
     @classmethod
     def all(cls):
         return cls.query.filter_by().order_by(desc(cls.id)).all()
+
+    @classmethod
+    def get(cls, id):
+        return cls.query.get_or_NoFound(id)
+
+    def save(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+        except Exception as e:
+            log.error(e)
+            db.session.rollback()
+
+    @classmethod
+    def verify_name(cls, name):
+        """同名校验"""
+        res = cls.query.filter_by(name=name).first()
+        if res:
+            abort(myResponse(1, None, f"{name} already exists"))
 
 
 class Department(Base):
@@ -46,8 +69,8 @@ class User(Base):
     用户类
     """
     __tablename__ = "user"
-    account = db.Column(db.String(20), comment="真实姓名")
-    name = db.Column(db.String(20), unique=True, comment="用户名")
+    account = db.Column(db.String(20), comment="用户名")
+    name = db.Column(db.String(20), unique=True, comment="真实姓名")
     password = db.Column(db.String(50), comment="密码")
     gender = db.Column(db.Boolean, default=True, comment="性别")
     admin = db.Column(db.Boolean, default=False, comment="管理员")
@@ -56,10 +79,14 @@ class User(Base):
     def __init__(self, account, name, password, gender, department, admin=None):
         self.account = account
         self.name = name
-        self.password = password
         self.gender = gender
         self.admin = admin
         self.department = department
+        self.hash_password(password)
+
+    def get_uid(self):
+        """get id"""
+        return self.id
 
     def is_superuser(self) -> bool:
         """是否是管理员"""
@@ -80,11 +107,9 @@ class User(Base):
         :return: token
         """
 
-        return jwt.encode({"id": self.id, "epx": time.time() + expires_time},
-                          current_app.config['SECRET_KEY'], algorithms=["HS256"])
-
-
-
+        return jwt.encode(
+            {'id': self.id, 'exp': time.time() + expires_time},
+            current_app.config['SECRET_KEY'], algorithm='HS256')
 
     @staticmethod
     def verify_token(token):
@@ -94,7 +119,7 @@ class User(Base):
         :return: user
         """
         try:
-            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithm=["HS256"])
         except:
             return None
 
@@ -122,6 +147,22 @@ class Product(Base):
     def __init__(self, name):
         self.name = name
 
+    @property
+    def solutions_records(self):
+        return self.solutions.filter_by().all()
+
+    @property
+    def platforms_records(self):
+        return self.platforms.filter_by().all()
+
+    @property
+    def builds_records(self):
+        return self.builds.filter_by().all()
+
+    @property
+    def errorTypes_records(self):
+        return self.errorTypes.filter_by().all()
+
     def __repr__(self):
         return f"product {self.name}"
 
@@ -133,8 +174,9 @@ class Solution(Base):
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="solution_bugs", lazy='dynamic')
 
-    def __init__(self, name):
+    def __init__(self, name, productId):
         self.name = name
+        self.product = productId
 
     def __repr__(self):
         return f"resolved: {self.name}"
@@ -147,8 +189,9 @@ class Platform(Base):
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="platform_bugs", lazy='dynamic')
 
-    def __init__(self, name):
+    def __init__(self, name, productId):
         self.name = name
+        self.product = productId
 
     def __repr__(self):
         return f"platform: {self.name}"
@@ -161,8 +204,9 @@ class Build(Base):
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="build_bugs", lazy='dynamic')
 
-    def __init__(self, name):
+    def __init__(self, name, productId):
         self.name = name
+        self.product = productId
 
     def __repr__(self):
         return f"build: {self.name}"
@@ -175,8 +219,9 @@ class ErrorType(Base):
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="error_type_bugs", lazy='dynamic')
 
-    def __init__(self, name):
+    def __init__(self, name, productId):
         self.name = name
+        self.product = productId
 
     def __repr__(self):
         return f"error_type: {self.name}"

@@ -11,7 +11,7 @@ from flask_restful import current_app, abort
 from sqlalchemy import desc
 from APP import db
 from COMMENT.Log import get_log
-from COMMENT.MyResponse import myResponse
+from COMMENT.myResponse import myResponse
 
 log = get_log(__file__)
 

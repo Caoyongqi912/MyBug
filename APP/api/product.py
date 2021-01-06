@@ -128,5 +128,213 @@ class ProductOpt(Resource):
             return jsonify(myResponse(1, None, str(e)))
 
 
+class SolutionOpt(Resource):
+
+    @auth.login_required
+    def get(self):
+        pid = request.args.get("productId")
+        p = Product.get(pid)
+        try:
+            s = [{"id": i.id, "name": i.name} for i in p.solutions_records]
+            return jsonify(myResponse(0, s, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def post(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
+        parse.add_argument("solution", type=str, required=False, location='json', help="err solutions")
+
+        pid = parse.parse_args().get("productId")
+        sol = parse.parse_args().get("solution")
+
+        p = Product.get(pid)
+
+        try:
+            s = [i.name for i in p.solutions_records]
+            if sol in s:
+                return jsonify(myResponse(1, None, f"{sol} 已存在"))
+            else:
+                s = Solution(sol, pid)
+                s.save()
+                return jsonify(myResponse(0, s.id, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def delete(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("id", type=str, required=False, location='json', help="err solutions")
+        id = parse.parse_args().get("id")
+        try:
+            Solution.get(id).delete()
+            return jsonify(myResponse(0, None, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+
+class PlatformOpt(Resource):
+
+    @auth.login_required
+    def get(self):
+        pid = request.args.get("productId")
+        p = Product.get(pid)
+        try:
+            s = [i.name for i in p.platforms_records]
+            return jsonify(myResponse(0, s, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def post(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
+        parse.add_argument("platform", type=str, required=False, location='json', help="err platform")
+
+        pid = parse.parse_args().get("productId")
+        pla = parse.parse_args().get("platform")
+
+        p = Product.get(pid)
+
+        try:
+            pr = [i.name for i in p.platforms_records]
+            if pla in pr:
+                return jsonify(myResponse(1, None, f"{pla} 已存在"))
+            else:
+                p = Platform(pla, pid)
+                p.save()
+                return jsonify(myResponse(0, p.id, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def delete(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("id", type=str, required=False, location='json', help="err id")
+        id = parse.parse_args().get("id")
+        try:
+            Platform.get(id).delete()
+            return jsonify(myResponse(0, None, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+
+class BuildOpt(Resource):
+
+    @auth.login_required
+    def get(self):
+        pid = request.args.get("productId")
+        p = Product.get(pid)
+        try:
+            b = [i.name for i in p.builds_records]
+            return jsonify(myResponse(0, b, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def post(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
+        parse.add_argument("build", type=str, required=False, location='json', help="err buildId")
+
+        pid = parse.parse_args().get("productId")
+        bui = parse.parse_args().get("build")
+
+        p = Product.get(pid)
+
+        try:
+            br = [i.name for i in p.builds_records]
+            if bui in br:
+                return jsonify(myResponse(1, None, f"{bui} 已存在"))
+            else:
+                b = Build(bui, pid)
+                b.save()
+                return jsonify(myResponse(0, b.id, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def delete(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("id", type=str, required=False, location='json', help="err id")
+        id = parse.parse_args().get("id")
+        try:
+            Build.get(id).delete()
+            return jsonify(myResponse(0, None, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+
+class ErrorTypeOpt(Resource):
+
+    @auth.login_required
+    def get(self):
+        pid = request.args.get("productId")
+        p = Product.get(pid)
+        try:
+            e = [i.name for i in p.errorTypes_records]
+            return jsonify(myResponse(0, e, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def post(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
+        parse.add_argument("errorType", type=str, required=False, location='json', help="err errorType")
+
+        pid = parse.parse_args().get("productId")
+        et = parse.parse_args().get("errorType")
+
+        p = Product.get(pid)
+
+        try:
+            er = [i.name for i in p.errorTypes_records]
+            if et in er:
+                return jsonify(myResponse(1, None, f"{et} 已存在"))
+            else:
+                e = ErrorType(et, pid)
+                e.save()
+                return jsonify(myResponse(0, e.id, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def delete(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("id", type=str, required=False, location='json', help="err id")
+        id = parse.parse_args().get("id")
+        try:
+            ErrorType.get(id).delete()
+            return jsonify(myResponse(0, None, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+
 api_script = Api(myBug)
 api_script.add_resource(ProductOpt, '/productOpt')
+api_script.add_resource(SolutionOpt, '/solutionOpt')
+api_script.add_resource(BuildOpt, '/buildOpt')
+api_script.add_resource(ErrorTypeOpt, '/errorTypeOpt')
+api_script.add_resource(PlatformOpt, '/platformOpt')

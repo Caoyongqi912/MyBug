@@ -8,7 +8,7 @@
 from flask_restful import abort
 from flask_sqlalchemy import BaseQuery
 from .Log import get_log
-from .MyResponse import myResponse
+from .myResponse import myResponse
 
 log = get_log(__name__)
 

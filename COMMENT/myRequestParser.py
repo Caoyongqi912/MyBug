@@ -15,14 +15,15 @@ class MyRequestParser(reqparse.Argument):
         """
 
     def __init__(self, name, default=None, dest=None, required=False, ignore=False, type=reqparse.text_type,
-                 location=('json', "value"), choices=(), action="store", help=None, operators=("=",),
+                 location=('json', "value"), choices=(), action="store", help=None, operators=('=',),
                  case_sensitive=True, nullable=False):
         self.nullable = nullable
         super(MyRequestParser, self).__init__(name, default=default, dest=dest,
                                               required=required, ignore=ignore,
                                               type=type, location=location,
                                               choices=choices, action=action,
-                                              help=help, operators=operators,
+                                              help=help,
+                                              operators=operators,
                                               case_sensitive=case_sensitive)
 
     def convert(self, value, op):
@@ -33,6 +34,7 @@ class MyRequestParser(reqparse.Argument):
         :param op:
         :return:
         """
+
         if value is None or value == "":
             raise TypeError(f"{value} can't be null!")
         return super(MyRequestParser, self).convert(value, op)
@@ -44,7 +46,8 @@ class MyRequestParser(reqparse.Argument):
         :param bundle_errors:
         :return:
         """
-        err = f"{self.name} 不能为空"
+        err = f"{self.name} 非法参数！"
+        print(error)
         if current_app.config.get("BUNDLE_ERRORS", False) or bundle_errors:
             return error, err
-        abort(400, code=1, data="", msg=err)
+        abort(400, code=1, data=None, msg=err)

@@ -28,9 +28,7 @@ class MyBugBaseQuery(BaseQuery):
     def get_or_NoFound(self, ident):
         rv = self.get(ident)
         if not rv:
-            abort(400, **myResponse(0, None, "id 不存在"))
+            abort(400, **myResponse(0, None, f" id 不存在"))
         elif rv.status == 0:
-            abort(400, **myResponse(0, None, "id 已删除"))
+            abort(400, **myResponse(0, None, f" id 已删除"))
         return rv
-
-

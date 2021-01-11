@@ -144,11 +144,12 @@ class Product(Base):
     # 所有解决方案
     solutions = db.relationship("Solution", backref=("product_solutions"), lazy="dynamic", cascade="save-update,delete")
     # 所有测试平台
-    platforms = db.relationship("Platform", backref="product_platforms", lazy="dynamic",cascade="save-update,delete")
+    platforms = db.relationship("Platform", backref="product_platforms", lazy="dynamic", cascade="save-update,delete")
     # 所有版本
-    builds = db.relationship("Build", backref="product_builds", lazy="dynamic",cascade="save-update,delete")
+    builds = db.relationship("Build", backref="product_builds", lazy="dynamic", cascade="save-update,delete")
     # 所有错误类型
-    errorTypes = db.relationship("ErrorType", backref="product_error_types", lazy="dynamic",cascade="save-update,delete")
+    errorTypes = db.relationship("ErrorType", backref="product_error_types", lazy="dynamic",
+                                 cascade="save-update,delete")
     # 所有bug
     bugs = db.relationship("Bugs", backref="product_bugs", lazy="dynamic")
 

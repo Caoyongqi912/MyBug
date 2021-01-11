@@ -6,14 +6,16 @@
 
 
 from flask import jsonify, g
-from flask_restful import Resource, Api, reqparse
-from APP import auth
+from flask_restful import Resource, Api, reqparse, inputs
+from APP import auth, db
+from .errors_or_auth import is_admin
 from APP.api import myBug
 from COMMENT.myResponse import myResponse
-from Model.models import User
+from Model.models import User, Department
 from COMMENT.Log import get_log
 from COMMENT.myRequestParser import MyRequestParser
 from COMMENT.myBlinker import login_signal
+
 log = get_log(__file__)
 
 
@@ -57,24 +59,86 @@ class Register(Resource):
         parse.add_argument("account", type=str, required=True)
         parse.add_argument("name", type=str, required=True)
         parse.add_argument("password", type=str, required=True)
-        parse.add_argument("admin", type=bool)
-        parse.add_argument("department", type=str, required=False)
-        parse.add_argument("gender", type=bool, required=False)
+        parse.add_argument("departmentId", type=str)
 
-        department = parse.parse_args().get("department")
+        parse.add_argument("admin", type=inputs.boolean)
+        parse.add_argument("gender", type=inputs.boolean)
+
+        departmentId = parse.parse_args().get("departmentId")
         account = parse.parse_args().get("account")
         name = parse.parse_args().get("name")
         password = parse.parse_args().get("password")
+
         admin = parse.parse_args().get("admin")
         gender = parse.parse_args().get("gender")
 
+        if departmentId:
+            # departmentId验证
+            Department.get(departmentId)
+
+        # name 验证
         User.verify_name(name)
 
-        User(account=account, name=name, password=password, gender=gender, department=department, admin=admin).save()
+        u = User(account=account, name=name, password=password, gender=gender, department=departmentId, admin=admin)
+        u.save()
 
-        return jsonify(myResponse(0, None, "ok"))
+        return jsonify(myResponse(0, u.id, "ok"))
+
+
+class DepartmentOpt(Resource):
+
+    @auth.login_required
+    @is_admin
+    def post(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("name", type=str, required=True)
+
+        name = parse.parse_args().get("name")
+        Department.verify_name(name=name)
+        try:
+            d = Department(name=name)
+            d.save()
+            return jsonify(myResponse(0, d.id, "ok"))
+        except Exception as  e:
+            log.error(e)
+            return jsonify(myResponse(1, None, e))
+
+    @auth.login_required
+    @is_admin
+    def put(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("id", type=str, required=True)
+        parse.add_argument("name", type=str, required=True)
+
+        did = parse.parse_args().get("id")
+        name = parse.parse_args().get("name")
+        d = Department.get(did)
+        try:
+            d.name = name
+            d.save()
+            return jsonify(myResponse(0, d.id, "ok"))
+        except Exception as e:
+            log.error(e)
+            db.session.rollback()
+            return jsonify(myResponse(1, None, e))
+
+    @auth.login_required
+    @is_admin
+    def delete(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("id", type=str, required=True)
+        did = parse.parse_args().get("id")
+        d = Department.get(did)
+        try:
+            d.delete()
+            return jsonify(myResponse(0, None, "ok"))
+        except Exception as e:
+            log.error(e)
+            db.session.rollback()
+            return jsonify(myResponse(1, None, e))
 
 
 api_script = Api(myBug)
 api_script.add_resource(Login, "/login")
 api_script.add_resource(Register, "/register")
+api_script.add_resource(DepartmentOpt, "/departmentOpt")

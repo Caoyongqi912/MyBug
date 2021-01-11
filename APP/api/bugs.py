@@ -35,6 +35,7 @@ class MyBugs(Resource):
 
         productId = parse.parse_args().get("productId")
         projectId = parse.parse_args().get("projectId")
+
         platformId = parse.parse_args().get("platformId")
         buildId = parse.parse_args().get("buildId")
         title = parse.parse_args().get("title")
@@ -44,8 +45,8 @@ class MyBugs(Resource):
         mailTo = parse.parse_args().get("mailTo")
         stepsBody = parse.parse_args().get("stepsBody")
 
-        Product.get(productId)
-        Project.get(projectId)
+        produ = Product.get(productId)
+        proj = Project.get(projectId)
         Platform.get(platformId)
         Build.get(buildId)
 

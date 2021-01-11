@@ -268,7 +268,7 @@ class Bugs(Base):
     updater = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="修改者")
     assignedTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="指派给")
     resolvedBy = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="解决者")
-    mailTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="指派给")
+    mailTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="抄送给")
     stepsBody = db.Column(db.TEXT, comment="步骤")
     solution = db.Column(db.Integer, db.ForeignKey("solution.id"), nullable=True, comment="解决方案")
     platform = db.Column(db.Integer, db.ForeignKey("platform.id"), nullable=True, comment="测试平台")
@@ -293,7 +293,4 @@ class Bugs(Base):
         self.stepsBody = stepsBody
         self.build = build
         self.product = product
-        if not platform:
-            self.platform = 0
-        else:
-            self.platform = platform
+        self.platform = platform

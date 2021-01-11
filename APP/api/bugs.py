@@ -45,10 +45,19 @@ class MyBugs(Resource):
         mailTo = parse.parse_args().get("mailTo")
         stepsBody = parse.parse_args().get("stepsBody")
 
-        produ = Product.get(productId)
-        proj = Project.get(projectId)
-        Platform.get(platformId)
-        Build.get(buildId)
+        product = Product.get(productId)
+        project = Project.get(projectId)
+        if project not in product.projects_records:
+            return jsonify(myResponse(1,None,f"project： {project} 不存在"))
+        platform = Platform.get(platformId)
+        if platform not in product.platforms_records:
+            return jsonify(myResponse(1,None,f"platform： {platform} 不存在"))
+        build = Build.get(buildId)
+        if build not in product.builds_records:
+            return jsonify(myResponse(1,None,f"build： {build} 不存在"))
+
+        User.get(assignedTo)
+        User.get(mailTo)
 
         try:
             u = Bugs(title=title, creater=g.user.id, stepsBody=stepsBody, product=productId, build=buildId, level=level,

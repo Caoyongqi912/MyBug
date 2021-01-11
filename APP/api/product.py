@@ -10,7 +10,7 @@ from APP.api import myBug
 from COMMENT.myRequestParser import MyRequestParser
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
-from Model.models import Product, Solution, Build, Platform, ErrorType
+from Model.models import Product, Solution, Build, Platform, ErrorType, Project
 from .errors_or_auth import is_admin
 from APP import auth, db
 
@@ -28,12 +28,14 @@ class ProductOpt(Resource):
         parse.add_argument("platforms", type=list, required=False, location='json', help="err platforms")
         parse.add_argument("builds", type=list, required=False, location='json', help="err builds")
         parse.add_argument("errorTypes", type=list, required=False, location='json', help="err errorTypes")
+        parse.add_argument("projects", type=list, required=False, location='json', help="err errorTypes")
 
         name = parse.parse_args().get("name")
         solutions = parse.parse_args().get("solutions")
         platforms = parse.parse_args().get("platforms")
         builds = parse.parse_args().get("builds")
         errorTypes = parse.parse_args().get("errorTypes")
+        projects = parse.parse_args().get(("projects"))
 
         Product.verify_name(name=name)
         pro = Product(name)
@@ -55,7 +57,10 @@ class ProductOpt(Resource):
                 for e in errorTypes:
                     ErrorType.verify_name(e)
                     ErrorType(name=e, productId=pro.id).save()
-
+            if projects:
+                for p in projects:
+                    Project.verify_name(p)
+                    Project(name=p, productId=pro.id).save()
             return jsonify(myResponse(0, None, "ok"))
 
         except Exception as e:
@@ -332,9 +337,61 @@ class ErrorTypeOpt(Resource):
             return jsonify(myResponse(1, None, str(e)))
 
 
+class ProjectOpt(Resource):
+
+    @auth.login_required
+    def get(self):
+        pid = request.args.get("productId")
+        p = Product.get(pid)
+        try:
+            e = [i.name for i in p.projects_records]
+            return jsonify(myResponse(0, e, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def post(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
+        parse.add_argument("name", type=str, required=False, location='json', help="err errorType")
+
+        pid = parse.parse_args().get("productId")
+        name = parse.parse_args().get("name")
+
+        p = Product.get(pid)
+        Project.verify_name(name)
+        try:
+            names = [i.name for i in p.errorTypes_records]
+            if name in names:
+                return jsonify(myResponse(1, None, f"{name} 已存在"))
+            else:
+                p = Project(name, pid)
+                p.save()
+                return jsonify(myResponse(0, p.id, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def delete(self):
+        parse = reqparse.RequestParser(argument_class=MyRequestParser)
+        parse.add_argument("id", type=str, required=False, location='json', help="err id")
+        id = parse.parse_args().get("id")
+        try:
+            Project.get(id).delete()
+            return jsonify(myResponse(0, None, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+
 api_script = Api(myBug)
 api_script.add_resource(ProductOpt, '/productOpt')
 api_script.add_resource(SolutionOpt, '/solutionOpt')
 api_script.add_resource(BuildOpt, '/buildOpt')
 api_script.add_resource(ErrorTypeOpt, '/errorTypeOpt')
 api_script.add_resource(PlatformOpt, '/platformOpt')
+api_script.add_resource(ProjectOpt, '/projectOpt')

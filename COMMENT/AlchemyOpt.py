@@ -25,10 +25,10 @@ class MyBugBaseQuery(BaseQuery):
         kwargs.setdefault('status', 1)
         return super().filter_by(**kwargs)
 
-    def get_or_NoFound(self, ident):
+    def get_or_NoFound(self, ident,name):
         rv = self.get(ident)
         if not rv:
-            abort(400, **myResponse(0, None, f" id 不存在"))
+            abort(400, **myResponse(1, None, f"{name}: id 不存在"))
         elif rv.status == 0:
-            abort(400, **myResponse(0, None, f" id 已删除"))
+            abort(400, **myResponse(1, None, f"{name}: id 已删除"))
         return rv

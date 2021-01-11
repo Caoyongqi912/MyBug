@@ -33,7 +33,7 @@ class Base(db.Model):
 
     @classmethod
     def get(cls, id):
-        return cls.query.get_or_NoFound(id)
+        return cls.query.get_or_NoFound(id, cls.__name__)
 
     def save(self):
         try:
@@ -150,6 +150,8 @@ class Product(Base):
     # 所有错误类型
     errorTypes = db.relationship("ErrorType", backref="product_error_types", lazy="dynamic",
                                  cascade="save-update,delete")
+    # 所有项目
+    projects = db.relationship("Project", backref="product_projects", lazy="dynamic", cascade="save-update,delete")
     # 所有bug
     bugs = db.relationship("Bugs", backref="product_bugs", lazy="dynamic")
 
@@ -169,11 +171,29 @@ class Product(Base):
         return self.builds.filter_by().all()
 
     @property
+    def projects_records(self):
+        return self.projects.filter_by().all()
+
+    @property
     def errorTypes_records(self):
         return self.errorTypes.filter_by().all()
 
     def __repr__(self):
         return f"product {self.name}"
+
+
+class Project(Base):
+    """所属项目类"""
+    __tablename__ = "project"
+    name = db.Column(db.String(30), unique=True, comment="项目名")
+    product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment="所属产品")
+
+    def __init__(self, name, productId):
+        self.product = productId
+        self.name = name
+
+    def __repr__(self):
+        return f"project: {self.name}"
 
 
 class Solution(Base):

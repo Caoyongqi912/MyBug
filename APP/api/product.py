@@ -28,17 +28,17 @@ class ProductOpt(Resource):
         parse.add_argument("platforms", type=list, required=False, location='json', help="err platforms")
         parse.add_argument("builds", type=list, required=False, location='json', help="err builds")
         parse.add_argument("errorTypes", type=list, required=False, location='json', help="err errorTypes")
-        parse.add_argument("projects", type=list, required=False, location='json', help="err errorTypes")
+        parse.add_argument("projectId", type=str, required=False, location='json', help="err errorTypes")
 
         name = parse.parse_args().get("name")
         solutions = parse.parse_args().get("solutions")
         platforms = parse.parse_args().get("platforms")
         builds = parse.parse_args().get("builds")
         errorTypes = parse.parse_args().get("errorTypes")
-        projects = parse.parse_args().get(("projects"))
-
+        projectId = parse.parse_args().get(("projectId"))
+        Project.get(projectId)
         Product.verify_name(name=name)
-        pro = Product(name)
+        pro = Product(name, projectId)
         pro.save()
         try:
             if solutions:
@@ -57,10 +57,7 @@ class ProductOpt(Resource):
                 for e in errorTypes:
                     ErrorType.verify_name(e)
                     ErrorType(name=e, productId=pro.id).save()
-            if projects:
-                for p in projects:
-                    Project.verify_name(p)
-                    Project(name=p, productId=pro.id).save()
+
             return jsonify(myResponse(0, None, "ok"))
 
         except Exception as e:
@@ -341,10 +338,10 @@ class ProjectOpt(Resource):
 
     @auth.login_required
     def get(self):
-        pid = request.args.get("productId")
-        p = Product.get(pid)
+        pid = request.args.get("projectId")
+        p = Project.get(pid)
         try:
-            e = [i.name for i in p.projects_records]
+            e = [i.name for i in p.product]
             return jsonify(myResponse(0, e, "ok"))
         except Exception as e:
             log.error(e)
@@ -354,22 +351,13 @@ class ProjectOpt(Resource):
     @is_admin
     def post(self):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
         parse.add_argument("name", type=str, required=False, location='json', help="err errorType")
-
-        pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
-
-        p = Product.get(pid)
         Project.verify_name(name)
         try:
-            names = [i.name for i in p.errorTypes_records]
-            if name in names:
-                return jsonify(myResponse(1, None, f"{name} 已存在"))
-            else:
-                p = Project(name, pid)
-                p.save()
-                return jsonify(myResponse(0, p.id, "ok"))
+            p = Project(name)
+            p.save()
+            return jsonify(myResponse(0, p.id, "ok"))
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))

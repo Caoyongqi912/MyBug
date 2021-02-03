@@ -137,6 +137,19 @@ class User(Base):
         return f"User: {self.name}"
 
 
+class Project(Base):
+    """项目类"""
+    __tablename__ = "project"
+    name = db.Column(db.String(30), unique=True, comment="项目名")
+    product = db.relationship("Product", backref="project", lazy="dynamic", cascade="save-update,delete")
+
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return f"project: {self.name}"
+
+
 class Product(Base):
     """产品类"""
     __tabelname__ = "product"
@@ -150,12 +163,13 @@ class Product(Base):
     # 所有错误类型
     errorTypes = db.relationship("ErrorType", backref="product_error_types", lazy="dynamic",
                                  cascade="save-update,delete")
-    # 所有项目
-    projects = db.relationship("Project", backref="product_projects", lazy="dynamic", cascade="save-update,delete")
     # 所有bug
     bugs = db.relationship("Bugs", backref="product_bugs", lazy="dynamic")
+    # 所属项目
+    projectId = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False, comment='所属项目')
 
-    def __init__(self, name):
+    def __init__(self, name, projectId):
+        self.projectId = projectId
         self.name = name
 
     @property
@@ -182,24 +196,10 @@ class Product(Base):
         return f"product {self.name}"
 
 
-class Project(Base):
-    """所属项目类"""
-    __tablename__ = "project"
-    name = db.Column(db.String(30), unique=True, comment="项目名")
-    product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment="所属产品")
-
-    def __init__(self, name, productId):
-        self.product = productId
-        self.name = name
-
-    def __repr__(self):
-        return f"project: {self.name}"
-
-
 class Solution(Base):
     """解决方案类"""
     __tablename__ = "solution"
-    name = db.Column(db.String(30), unique=True, comment="解决方案名")
+    name = db.Column(db.String(30), unique=False, comment="解决方案名")
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="solution_bugs", lazy='dynamic')
 
@@ -214,7 +214,7 @@ class Solution(Base):
 class Platform(Base):
     """所用平台类"""
     __tablename__ = "platform"
-    name = db.Column(db.String(30), unique=True, comment="平台名称")
+    name = db.Column(db.String(30), unique=False, comment="平台名称")
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="platform_bugs", lazy='dynamic')
 
@@ -229,7 +229,7 @@ class Platform(Base):
 class Build(Base):
     """所用版本类"""
     __tablename__ = "build"
-    name = db.Column(db.String(30), unique=True, comment="版本编号")
+    name = db.Column(db.String(30), unique=False, comment="版本编号")
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="build_bugs", lazy='dynamic')
 
@@ -244,7 +244,7 @@ class Build(Base):
 class ErrorType(Base):
     """错误类型类"""
     __tablename__ = "error_type"
-    name = db.Column(db.String(30), unique=True, comment="错误类型")
+    name = db.Column(db.String(30), unique=False, comment="错误类型")
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="error_type_bugs", lazy='dynamic')
 

@@ -5,7 +5,7 @@
 # @File    : users.py
 
 
-from flask import jsonify, g
+from flask import jsonify, g, request
 from flask_restful import Resource, Api, reqparse, inputs
 from APP import auth, db
 from .errors_or_auth import is_admin
@@ -61,24 +61,24 @@ class Register(Resource):
         parse.add_argument("password", type=str, required=True)
         parse.add_argument("departmentId", type=str)
 
-        parse.add_argument("admin", type=inputs.boolean)
-        parse.add_argument("gender", type=inputs.boolean)
-
         departmentId = parse.parse_args().get("departmentId")
         account = parse.parse_args().get("account")
         name = parse.parse_args().get("name")
         password = parse.parse_args().get("password")
 
-        admin = parse.parse_args().get("admin")
-        gender = parse.parse_args().get("gender")
+        admin = request.json.get('admin')
+        gender = request.json.get('gender')
 
+        if not isinstance(admin, bool):
+            return jsonify(myResponse(22, None, "admin typeError"))
+        if not isinstance(gender, bool):
+            return jsonify(myResponse(22, None, "gender typeError"))
         if departmentId:
             # departmentId验证
             Department.get(departmentId)
 
         # name 验证
         User.verify_name(name)
-
         u = User(account=account, name=name, password=password, gender=gender, department=departmentId, admin=admin)
         u.save()
 

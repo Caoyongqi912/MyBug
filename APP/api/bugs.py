@@ -5,7 +5,7 @@
 # @File    : bugs.py
 
 from flask_restful import Api, Resource, reqparse
-from APP import auth, db
+from APP import auth
 from flask import g, jsonify
 from Model.models import User, Bugs, Project, Product, ErrorType, Platform, Build
 from APP.api import myBug
@@ -80,9 +80,13 @@ class MyBugs(Resource):
 
 class BugLists(Resource):
 
+    @auth.login_required
     def get(self):
-        pass
+        projects = Project.query.all()
+        print(projects)
+
 
 
 api_script = Api(myBug)
 api_script.add_resource(MyBugs, "/bugOpt")
+api_script.add_resource(BugLists, "/getBugs")

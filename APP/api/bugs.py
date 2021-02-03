@@ -48,13 +48,13 @@ class MyBugs(Resource):
         product = Product.get(productId)
         project = Project.get(projectId)
         if project not in product.projects_records:
-            return jsonify(myResponse(1,None,f"project： {project} 不存在"))
+            return jsonify(myResponse(1, None, f"project： {project} 不存在"))
         platform = Platform.get(platformId)
         if platform not in product.platforms_records:
-            return jsonify(myResponse(1,None,f"platform： {platform} 不存在"))
+            return jsonify(myResponse(1, None, f"platform： {platform} 不存在"))
         build = Build.get(buildId)
         if build not in product.builds_records:
-            return jsonify(myResponse(1,None,f"build： {build} 不存在"))
+            return jsonify(myResponse(1, None, f"build： {build} 不存在"))
 
         User.get(assignedTo)
         User.get(mailTo)

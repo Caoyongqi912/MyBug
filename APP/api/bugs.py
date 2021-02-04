@@ -27,8 +27,8 @@ class MyBugs(Resource):
         parse.add_argument("platformId", type=str, required=False, location='json')
         parse.add_argument("buildId", type=str, required=False, location='json')
         parse.add_argument("title", type=str, required=False, location='json')
-        parse.add_argument("level", type=str, required=False, location='json')
-        parse.add_argument("priority", type=str, required=False, location='json')
+        parse.add_argument("level", type=str, choices=['p1', 'p2', 'p3', 'p4'], required=False, location='json',
+                           help="level err")
         parse.add_argument("assignedTo", type=str, required=False, location='json')
         parse.add_argument("mailTo", type=str, required=False, location='json')
         parse.add_argument("stepsBody", type=str, required=False, location='json')
@@ -60,8 +60,8 @@ class MyBugs(Resource):
         User.get(mailTo)
 
         try:
-            u = Bugs(title=title, creater=g.user.id, stepsBody=stepsBody, product=productId, build=buildId, level=level,
-                     priority=priority, assignedTo=assignedTo, mailTo=mailTo, platform=platformId)
+            u = Bugs(title=title, creater=g.user.id, stepsBody=stepsBody, product=productId, build=buildId)
+
             u.save()
             return jsonify(myResponse(0, u.id, "ok"))
         except ErrorType as e:
@@ -84,7 +84,6 @@ class BugLists(Resource):
     def get(self):
         projects = Project.query.all()
         print(projects)
-
 
 
 api_script = Api(myBug)

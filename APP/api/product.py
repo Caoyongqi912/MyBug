@@ -79,10 +79,10 @@ class ProductOpt(Resource):
             productInfo = [
                 {"id": i.id,
                  "name": i.name,
-                 "solutions": [s.name for s in i.solutions_records],
-                 "platforms": [p.name for p in i.platforms_records],
-                 "builds": [b.name for b in i.builds_records],
-                 "errorTypes": [e.name for e in i.errorTypes_records],
+                 "solutions": [{"solution_name": s.name, "id": s.id} for s in i.solutions_records],
+                 "platforms": [{"platform_name": p.name, "id": p.id} for p in i.platforms_records],
+                 "builds": [{"build_name": b.name, "id": b.id} for b in i.builds_records],
+                 "errorTypes": [{"error_name": e.name, "id": e.id} for e in i.errorTypes_records],
                  }
                 for i in ps]
             return jsonify(myResponse(0, productInfo, "ok"))
@@ -145,6 +145,23 @@ class SolutionOpt(Resource):
 
     @auth.login_required
     @is_admin
+    def put(self):
+        pid = request.args.get("productId")
+        sid = request.args.get("solutionId")
+        name = request.args.get("solutionName")
+
+        p = Product.get(pid)
+        s = Solution.get(sid)
+        if s not in p.solutions_records:
+            return jsonify(myResponse(21, None, f"Product:{pid}  Not included {sid}"))
+
+        s.name = name
+        s.save()
+
+        return jsonify(0, s.id, "ok")
+
+    @auth.login_required
+    @is_admin
     def post(self):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
@@ -188,11 +205,26 @@ class PlatformOpt(Resource):
         pid = request.args.get("productId")
         p = Product.get(pid)
         try:
-            s = [i.name for i in p.platforms_records]
+            s = [{"platform_name": i.name, "id": i.id} for i in p.platforms_records]
             return jsonify(myResponse(0, s, "ok"))
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def put(self):
+        pid = request.args.get("productId")
+        pld = request.args.get("platformId")
+        name = request.args.get("platformName")
+        p = Product.get(pid)
+        pl = Platform.get(pld)
+        if pl not in p.builds_records:
+            return jsonify(myResponse(21, None, f"Product:{pid}  Not included {pld}"))
+
+        pl.name = name
+        pl.save()
+        return jsonify(0, pl.id, "ok")
 
     @auth.login_required
     @is_admin
@@ -239,11 +271,26 @@ class BuildOpt(Resource):
         pid = request.args.get("productId")
         p = Product.get(pid)
         try:
-            b = [i.name for i in p.builds_records]
+            b = [{"build_name": i.name, "id": i.id} for i in p.builds_records]
             return jsonify(myResponse(0, b, "ok"))
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def put(self):
+        pid = request.args.get("productId")
+        bid = request.args.get("buildId")
+        name = request.args.get("buildName")
+        p = Product.get(pid)
+        b = Build.get(bid)
+        if b not in p.builds_records:
+            return jsonify(myResponse(21, None, f"Product:{pid}  Not included {bid}"))
+
+        b.name = name
+        b.save()
+        return jsonify(0, b.id, "ok")
 
     @auth.login_required
     @is_admin
@@ -295,6 +342,21 @@ class ErrorTypeOpt(Resource):
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def put(self):
+        pid = request.args.get("productId")
+        eid = request.args.get("errorId")
+        name = request.args.get("platformName")
+        p = Product.get(pid)
+        e = ErrorType.get(eid)
+        if e not in p.errorTypes_records:
+            return jsonify(myResponse(21, None, f"Product:{pid}  Not included {eid}"))
+
+        e.name = name
+        e.save()
+        return jsonify(0, e.id, "ok")
 
     @auth.login_required
     @is_admin

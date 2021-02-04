@@ -155,7 +155,7 @@ class Product(Base):
     __tabelname__ = "product"
     name = db.Column(db.String(50), unique=True, comment="产品名")
     # 所有解决方案
-    solutions = db.relationship("Solution", backref=("product_solutions"), lazy="dynamic", cascade="save-update,delete")
+    solutions = db.relationship("Solution", backref="product_solutions", lazy="dynamic", cascade="save-update,delete")
     # 所有测试平台
     platforms = db.relationship("Platform", backref="product_platforms", lazy="dynamic", cascade="save-update,delete")
     # 所有版本
@@ -171,6 +171,10 @@ class Product(Base):
     def __init__(self, name, projectId):
         self.projectId = projectId
         self.name = name
+
+    @property
+    def bugs_records(self):
+        return self.bugs.filter_by().all()
 
     @property
     def solutions_records(self):
@@ -275,22 +279,26 @@ class Bugs(Base):
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=True, comment="所属项目")
     build = db.Column(db.Integer, db.ForeignKey("build.id"), nullable=False, comment="版本")
     errorType = db.Column(db.Integer, db.ForeignKey("error_type.id"), nullable=True, comment="错误类型")
+    model = db.Column(db.Integer, db.ForeignKey("bug_model.id"), nullable=True, comment="应用模版")
 
-    def __init__(self, title, creater, stepsBody, product, build, level=None, priority=None, status=None,
-                 confirmed=None, updater=None,
-                 assignedTo=None, resolvedBy=None, mailTo=None, solution=None, platform=None):
+    def __init__(self, title, creater, stepsBody, product, build):
         self.title = title
-        self.level = level
-        self.priority = priority
-        self.status = status
-        self.confirmed = confirmed
         self.creater = creater
-        self.updater = updater
-        self.assignedTo = assignedTo
-        self.solution = solution
-        self.resolvedBy = resolvedBy
-        self.mailTo = mailTo
         self.stepsBody = stepsBody
         self.build = build
         self.product = product
-        self.platform = platform
+
+
+
+    def __repr__(self):
+        return f"bug: {self.title}"
+
+
+class BugModel(Base):
+    """bug模版"""
+    __tablename__ = "bug_model"
+    name = db.Column(db.String(32), unique=False, comment="bug模版")
+    bugs = db.relationship("Bugs", backref="bug_model", lazy='dynamic')
+
+    def __init__(self, name):
+        self.name = name

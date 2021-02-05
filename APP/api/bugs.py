@@ -26,16 +26,20 @@ class MyBugs(Resource):
         parse.add_argument("projectId", type=str, required=False, location='json')
         parse.add_argument("platformId", type=str, required=False, location='json')
         parse.add_argument("buildId", type=str, required=False, location='json')
+        parse.add_argument("errorTypeId", type=str, required=False, location='json')
         parse.add_argument("title", type=str, required=False, location='json')
+
         parse.add_argument("level", type=str, choices=['p1', 'p2', 'p3', 'p4'], required=False, location='json',
                            help="level err")
+        parse.add_argument("priority", type=str, choices=['p1', 'p2', 'p3', 'p4'], required=False, location='json',
+                           help="level err")
+
         parse.add_argument("assignedTo", type=str, required=False, location='json')
         parse.add_argument("mailTo", type=str, required=False, location='json')
         parse.add_argument("stepsBody", type=str, required=False, location='json')
 
         productId = parse.parse_args().get("productId")
         projectId = parse.parse_args().get("projectId")
-
         platformId = parse.parse_args().get("platformId")
         buildId = parse.parse_args().get("buildId")
         title = parse.parse_args().get("title")
@@ -45,22 +49,24 @@ class MyBugs(Resource):
         mailTo = parse.parse_args().get("mailTo")
         stepsBody = parse.parse_args().get("stepsBody")
 
-        product = Product.get(productId)
         project = Project.get(projectId)
-        if project not in product.projects_records:
-            return jsonify(myResponse(1, None, f"project： {project} 不存在"))
-        platform = Platform.get(platformId)
-        if platform not in product.platforms_records:
-            return jsonify(myResponse(1, None, f"platform： {platform} 不存在"))
-        build = Build.get(buildId)
-        if build not in product.builds_records:
-            return jsonify(myResponse(1, None, f"build： {build} 不存在"))
+        product = Product.get(productId)
 
         User.get(assignedTo)
         User.get(mailTo)
 
+        if product not in project.product_records:
+            return jsonify(myResponse(21, None, f"Project： Not included productId {productId}"))
+        if int(platformId) not in [i.id for i in product.platforms_records]:
+            return jsonify(myResponse(21, None, f"Product： Not included platformId {platformId}"))
+
+        if int(buildId) not in [i.id for i in product.builds_records]:
+            return jsonify(myResponse(21, None, f"Product： Not included buildId {buildId}"))
+
         try:
             u = Bugs(title=title, creater=g.user.id, stepsBody=stepsBody, product=productId, build=buildId)
+            u.priority = priority
+            u.level = level
 
             u.save()
             return jsonify(myResponse(0, u.id, "ok"))

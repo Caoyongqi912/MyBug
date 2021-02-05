@@ -121,10 +121,10 @@ class ProductOpt(Resource):
     def delete(self):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
-
         ID = parse.parse_args().get("productId")
+        p = Product.get(ID)
         try:
-            Product.get(ID).delete()
+            p.delete()
             return jsonify(myResponse(0, None, "ok"))
         except Exception as e:
             return jsonify(myResponse(1, None, str(e)))
@@ -136,6 +136,7 @@ class SolutionOpt(Resource):
     def get(self):
         pid = request.args.get("productId")
         p = Product.get(pid)
+
         try:
             s = [{"id": i.id, "name": i.name} for i in p.solutions_records]
             return jsonify(myResponse(0, s, "ok"))
@@ -148,12 +149,17 @@ class SolutionOpt(Resource):
     def put(self):
         pid = request.args.get("productId")
         sid = request.args.get("solutionId")
-        name = request.args.get("solutionName")
+        name = request.args.get("name")
 
         p = Product.get(pid)
         s = Solution.get(sid)
+
         if s not in p.solutions_records:
             return jsonify(myResponse(21, None, f"Product:{pid}  Not included {sid}"))
+
+        # 验证同一 product name唯一
+        if name in [i.name for i in p.solutions_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
 
         s.name = name
         s.save()
@@ -165,21 +171,21 @@ class SolutionOpt(Resource):
     def post(self):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
-        parse.add_argument("solution", type=str, required=False, location='json', help="err solutions")
+        parse.add_argument("name", type=str, required=False, location='json', help="err solutions")
 
         pid = parse.parse_args().get("productId")
-        sol = parse.parse_args().get("solution")
+        name = parse.parse_args().get("name")
 
         p = Product.get(pid)
 
+        # 验证同一 product name唯一
+        if name in [i.name for i in p.solutions_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
+
         try:
-            s = [i.name for i in p.solutions_records]
-            if sol in s:
-                return jsonify(myResponse(1, None, f"{sol} 已存在"))
-            else:
-                s = Solution(sol, pid)
-                s.save()
-                return jsonify(myResponse(0, s.id, "ok"))
+            s = Solution(name, pid)
+            s.save()
+            return jsonify(myResponse(0, s.id, "ok"))
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))
@@ -190,10 +196,12 @@ class SolutionOpt(Resource):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("id", type=str, required=False, location='json', help="err solutions")
         id = parse.parse_args().get("id")
+
+        s = Solution.get(id)
         try:
-            Solution.get(id).delete()
+            s.delete()
             return jsonify(myResponse(0, None, "ok"))
-        except Exception as e:
+        except ErrorType as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))
 
@@ -214,14 +222,16 @@ class PlatformOpt(Resource):
     @auth.login_required
     @is_admin
     def put(self):
-        pid = request.args.get("productId")
-        pld = request.args.get("platformId")
-        name = request.args.get("platformName")
+        pid = request.json.get("productId")
+        pld = request.json.get("platformId")
+        name = request.args.get("name")
         p = Product.get(pid)
         pl = Platform.get(pld)
-        if pl not in p.builds_records:
+        if pl not in p.platforms_records:
             return jsonify(myResponse(21, None, f"Product:{pid}  Not included {pld}"))
-
+        # 验证同一 product name唯一
+        if name in [i.name for i in p.platforms_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
         pl.name = name
         pl.save()
         return jsonify(0, pl.id, "ok")
@@ -231,21 +241,19 @@ class PlatformOpt(Resource):
     def post(self):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
-        parse.add_argument("platform", type=str, required=False, location='json', help="err platform")
+        parse.add_argument("name", type=str, required=False, location='json', help="err platform")
 
         pid = parse.parse_args().get("productId")
-        pla = parse.parse_args().get("platform")
+        name = parse.parse_args().get("name")
 
         p = Product.get(pid)
-
+        # 验证同一 product name唯一
+        if name in [i.name for i in p.platforms_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
         try:
-            pr = [i.name for i in p.platforms_records]
-            if pla in pr:
-                return jsonify(myResponse(1, None, f"{pla} 已存在"))
-            else:
-                p = Platform(pla, pid)
-                p.save()
-                return jsonify(myResponse(0, p.id, "ok"))
+            p = Platform(name, pid)
+            p.save()
+            return jsonify(myResponse(0, p.id, "ok"))
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))
@@ -256,8 +264,9 @@ class PlatformOpt(Resource):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("id", type=str, required=False, location='json', help="err id")
         id = parse.parse_args().get("id")
+        p = Platform.get(id)
         try:
-            Platform.get(id).delete()
+            p.delete()
             return jsonify(myResponse(0, None, "ok"))
         except Exception as e:
             log.error(e)
@@ -280,14 +289,16 @@ class BuildOpt(Resource):
     @auth.login_required
     @is_admin
     def put(self):
-        pid = request.args.get("productId")
-        bid = request.args.get("buildId")
-        name = request.args.get("buildName")
+        pid = request.json.get("productId")
+        bid = request.json.get("buildId")
+        name = request.json.get("name")
         p = Product.get(pid)
         b = Build.get(bid)
         if b not in p.builds_records:
             return jsonify(myResponse(21, None, f"Product:{pid}  Not included {bid}"))
-
+            # 验证同一 product name唯一
+        if name in [i.name for i in p.builds_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
         b.name = name
         b.save()
         return jsonify(0, b.id, "ok")
@@ -297,21 +308,17 @@ class BuildOpt(Resource):
     def post(self):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
-        parse.add_argument("build", type=str, required=False, location='json', help="err buildId")
-
+        parse.add_argument("name", type=str, required=False, location='json', help="err buildId")
         pid = parse.parse_args().get("productId")
-        bui = parse.parse_args().get("build")
-
+        name = parse.parse_args().get("name")
         p = Product.get(pid)
-
+        # 验证同一 product name唯一
+        if name in [i.name for i in p.builds_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
         try:
-            br = [i.name for i in p.builds_records]
-            if bui in br:
-                return jsonify(myResponse(1, None, f"{bui} 已存在"))
-            else:
-                b = Build(bui, pid)
-                b.save()
-                return jsonify(myResponse(0, b.id, "ok"))
+            b = Build(name, pid)
+            b.save()
+            return jsonify(myResponse(0, b.id, "ok"))
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))
@@ -322,8 +329,9 @@ class BuildOpt(Resource):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("id", type=str, required=False, location='json', help="err id")
         id = parse.parse_args().get("id")
+        b = Build.get(id)
         try:
-            Build.get(id).delete()
+            b.delete()
             return jsonify(myResponse(0, None, "ok"))
         except Exception as e:
             log.error(e)
@@ -348,12 +356,13 @@ class ErrorTypeOpt(Resource):
     def put(self):
         pid = request.args.get("productId")
         eid = request.args.get("errorId")
-        name = request.args.get("platformName")
+        name = request.args.get("name")
         p = Product.get(pid)
         e = ErrorType.get(eid)
         if e not in p.errorTypes_records:
             return jsonify(myResponse(21, None, f"Product:{pid}  Not included {eid}"))
-
+        if name in [i.name for i in p.builds_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
         e.name = name
         e.save()
         return jsonify(0, e.id, "ok")
@@ -363,21 +372,18 @@ class ErrorTypeOpt(Resource):
     def post(self):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
-        parse.add_argument("errorType", type=str, required=False, location='json', help="err errorType")
+        parse.add_argument("name", type=str, required=False, location='json', help="err errorType")
 
         pid = parse.parse_args().get("productId")
-        et = parse.parse_args().get("errorType")
-
+        name = parse.parse_args().get("name")
         p = Product.get(pid)
 
+        if name in [i.name for i in p.errorTypes_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
         try:
-            er = [i.name for i in p.errorTypes_records]
-            if et in er:
-                return jsonify(myResponse(1, None, f"{et} 已存在"))
-            else:
-                e = ErrorType(et, pid)
-                e.save()
-                return jsonify(myResponse(0, e.id, "ok"))
+            e = ErrorType(name, pid)
+            e.save()
+            return jsonify(myResponse(0, e.id, "ok"))
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(1, None, str(e)))
@@ -388,8 +394,9 @@ class ErrorTypeOpt(Resource):
         parse = reqparse.RequestParser(argument_class=MyRequestParser)
         parse.add_argument("id", type=str, required=False, location='json', help="err id")
         id = parse.parse_args().get("id")
+        e = ErrorType.get(id)
         try:
-            ErrorType.get(id).delete()
+            e.delete()
             return jsonify(myResponse(0, None, "ok"))
         except Exception as e:
             log.error(e)

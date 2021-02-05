@@ -43,6 +43,7 @@ class Base(db.Model):
             log.error(e)
             db.session.rollback()
 
+
     def delete(self):
         try:
             db.session.delete(self)
@@ -145,6 +146,10 @@ class Project(Base):
 
     def __init__(self, name):
         self.name = name
+
+    @property
+    def product_records(self):
+        return self.product.filter_by().all()
 
     def __repr__(self):
         return f"project: {self.name}"
@@ -279,7 +284,7 @@ class Bugs(Base):
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=True, comment="所属项目")
     build = db.Column(db.Integer, db.ForeignKey("build.id"), nullable=False, comment="版本")
     errorType = db.Column(db.Integer, db.ForeignKey("error_type.id"), nullable=True, comment="错误类型")
-    model = db.Column(db.Integer, db.ForeignKey("bug_model.id"), nullable=True, comment="应用模版")
+    bug_model = db.Column(db.Integer, db.ForeignKey("bug_model.id"), nullable=True, comment="应用模版")
 
     def __init__(self, title, creater, stepsBody, product, build):
         self.title = title
@@ -287,8 +292,6 @@ class Bugs(Base):
         self.stepsBody = stepsBody
         self.build = build
         self.product = product
-
-
 
     def __repr__(self):
         return f"bug: {self.title}"
@@ -298,7 +301,8 @@ class BugModel(Base):
     """bug模版"""
     __tablename__ = "bug_model"
     name = db.Column(db.String(32), unique=False, comment="bug模版")
-    bugs = db.relationship("Bugs", backref="bug_model", lazy='dynamic')
+    content = db.Column(db.TEXT,comment="模版内容")
+    bugs = db.relationship("Bugs", backref="bugs", lazy='dynamic')
 
     def __init__(self, name):
         self.name = name

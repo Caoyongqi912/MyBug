@@ -28,7 +28,7 @@ class MyTestCase(unittest.TestCase):
         self.client = app.test_client()
 
     def test_01(self):
-        resp = app.test_client().post("/api/bugOpt", json=self.body, auth=('cyq', "cyq")).json
+        resp = app.test_client().post("/api/bugOpt", json=self.body).json
 
         print(resp)
         self.assertEqual(1, 1)

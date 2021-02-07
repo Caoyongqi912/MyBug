@@ -13,6 +13,7 @@ from .errors_or_auth import is_admin
 from COMMENT.myRequestParser import MyRequestParser
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
+from COMMENT.ParamParse import MyParse
 
 log = get_log(__file__)
 
@@ -92,6 +93,20 @@ class BugLists(Resource):
         print(projects)
 
 
+class T(Resource):
+    parse = MyParse()
+
+    def get(self):
+        pass
+
+    def post(self):
+        self.parse.add(name="name", required=True, req_type=str, location="json")
+        self.parse.add(name="age", required=True, req_type=int, location="json")
+
+        p = self.parse.parse_args()
+        return p
+
 api_script = Api(myBug)
 api_script.add_resource(MyBugs, "/bugOpt")
 api_script.add_resource(BugLists, "/getBugs")
+api_script.add_resource(T, "/test")

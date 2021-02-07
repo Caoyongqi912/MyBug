@@ -26,6 +26,8 @@ class MyRequestParser(reqparse.Argument):
                                               operators=operators,
                                               case_sensitive=case_sensitive)
 
+
+
     def convert(self, value, op):
         """
         重写convert
@@ -47,7 +49,6 @@ class MyRequestParser(reqparse.Argument):
         :return:
         """
         err = f"{self.name} 非法参数！"
-        print(error)
         if current_app.config.get("BUNDLE_ERRORS", False) or bundle_errors:
             return error, err
         abort(400, code=1, data=None, msg=err)

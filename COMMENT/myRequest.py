@@ -19,7 +19,7 @@ class MyRequest:
     def go(self, method, url, params=None, body=None, auth=None):
 
         if method == "GET":
-            pass
+            return requests.get(url=self.Host + url, params=params, json=body, auth=auth)
 
         elif method == "POST":
             resp = requests.post(url=self.Host + url, params=params, json=body, auth=auth)
@@ -67,11 +67,15 @@ class MyRequest:
             "mailTo": random.randint(1, 11),
             "stepsBody": f.text()
         }
-        rep = self.go(method="POST",url="api/bugOpt",body=body,auth=('cyq','cyq'))
+        rep = self.go(method="POST", url="api/bugOpt", body=body, auth=('cyq', 'cyq'))
         print(rep.json())
 
+    def test(self):
+        body = {"name": "cyq", "age": "111", "cname": "hahha"}
+        rep = self.go(method="POST", url="api/test", body=body)
+        print(rep.json())
 
 
 if __name__ == '__main__':
     m = MyRequest()
-    m.add_bug()
+    m.test()

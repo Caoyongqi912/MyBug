@@ -5,16 +5,16 @@
 # @File    : users.py
 
 
-from flask import jsonify, g, request
-from flask_restful import Resource, Api, reqparse, inputs
+from flask import jsonify, g
+from flask_restful import Resource, Api
 from APP import auth, db
 from .errors_or_auth import is_admin
 from APP.api import myBug
 from COMMENT.myResponse import myResponse
 from Model.models import User, Department
 from COMMENT.Log import get_log
-from COMMENT.myRequestParser import MyRequestParser
 from COMMENT.myBlinker import login_signal
+from COMMENT.ParamParse import MyParse
 
 log = get_log(__file__)
 
@@ -22,10 +22,9 @@ log = get_log(__file__)
 class Login(Resource):
 
     def post(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("account", type=str, required=True, help="error account")
-        parse.add_argument("password", type=str, required=True, help="error password")
-
+        parse = MyParse()
+        parse.add(name="account")
+        parse.add(name="password")
         account = parse.parse_args().get("account")
         password = parse.parse_args().get("password")
         user = User.query.filter(User.account == account).first()
@@ -54,25 +53,26 @@ def get_auth_token():
 
 class Register(Resource):
 
-    def post(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("account", type=str, required=True)
-        parse.add_argument("name", type=str, required=True)
-        parse.add_argument("password", type=str, required=True)
-        parse.add_argument("departmentId", type=str)
+    def post(self) -> jsonify:
+        """
+        注册 post请求
+        :return: jsonify
+        """
+        parse = MyParse()
+        parse.add(name="account")
+        parse.add(name="name")
+        parse.add(name="password")
+        parse.add(name="departmentId", req_type=int, required=False)
+        parse.add(name="admin", req_type=bool, required=False, default=False)
+        parse.add(name="gender", req_type=bool, required=False, default=True)
 
         departmentId = parse.parse_args().get("departmentId")
         account = parse.parse_args().get("account")
         name = parse.parse_args().get("name")
         password = parse.parse_args().get("password")
+        admin = parse.parse_args().get("admin")
+        gender = parse.parse_args().get('gender')
 
-        admin = request.json.get('admin')
-        gender = request.json.get('gender')
-
-        if not isinstance(admin, bool):
-            return jsonify(myResponse(22, None, "admin typeError"))
-        if not isinstance(gender, bool):
-            return jsonify(myResponse(22, None, "gender typeError"))
         if departmentId:
             # departmentId验证
             Department.get(departmentId)
@@ -89,10 +89,13 @@ class DepartmentOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def post(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("name", type=str, required=True)
-
+    def post(self) -> jsonify:
+        """
+        创建部门
+        :return:  jsonify
+        """
+        parse = MyParse()
+        parse.add(name="name")
         name = parse.parse_args().get("name")
         Department.verify_name(name=name)
         try:
@@ -105,11 +108,14 @@ class DepartmentOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def put(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("id", type=str, required=True)
-        parse.add_argument("name", type=str, required=True)
-
+    def put(self) -> jsonify:
+        """
+        修改部门信息
+        :return: jsonify
+        """
+        parse = MyParse()
+        parse.add(name="id")
+        parse.add(name="name")
         did = parse.parse_args().get("id")
         name = parse.parse_args().get("name")
         d = Department.get(did)
@@ -124,9 +130,14 @@ class DepartmentOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def delete(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("id", type=str, required=True)
+    def delete(self) -> jsonify:
+        """
+        删除部门
+        :return: jsonify
+        """
+        parse = MyParse()
+        parse.add(name="id")
+        parse.add(name="test",required=False)
         did = parse.parse_args().get("id")
         d = Department.get(did)
         try:

@@ -70,11 +70,6 @@ class MyTestCase(unittest.TestCase):
         resp = app.test_client().post("/api/register", json=self.body).json
         self.assertEqual(resp['code'], 22)
 
-    def test_register10(self):
-        self.body["departmentId"] = 1123
-        resp = app.test_client().post("/api/register", json=self.body).json
-        self.assertEqual(resp['code'], 1)
-
 
 if __name__ == '__main__':
     unittest.main()

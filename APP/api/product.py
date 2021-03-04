@@ -4,11 +4,10 @@
 # @Author  : cyq
 # @File    : product.py
 
-from flask_restful import Api, Resource, reqparse, request
+from flask_restful import Api, Resource
 from flask import jsonify
 from APP.api import myBug
 from COMMENT.ParamParse import MyParse
-from COMMENT.myRequestParser import MyRequestParser
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
 from Model.models import Product, Solution, Build, Platform, ErrorType, Project
@@ -24,7 +23,7 @@ class ProductOpt(Resource):
     @is_admin
     def post(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="name")
+        parse.add(name="name", required=True)
         parse.add(name="solutions", type=list, required=False)
         parse.add(name="platforms", type=list, required=False)
         parse.add(name="builds", type=list, required=False)
@@ -70,7 +69,7 @@ class ProductOpt(Resource):
     @auth.login_required
     def get(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="productId", required=False, req_type=int, location='args')
+        parse.add(name="productId", required=False, location='args')
         pid = parse.parse_args().get("productId")
         try:
             if pid:
@@ -100,8 +99,8 @@ class ProductOpt(Resource):
     def put(self) -> jsonify:
 
         parse = MyParse()
-        parse.add(name="productName")
-        parse.add(name="productId")
+        parse.add(name="productName", required=True)
+        parse.add(name="productId", required=True)
         name = parse.parse_args().get("productName")
         Id = parse.parse_args().get('productId')
 
@@ -124,7 +123,7 @@ class ProductOpt(Resource):
     @is_admin
     def delete(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="productId")
+        parse.add(name="productId", required=True)
         ID = parse.parse_args().get("productId")
         p = Product.get(ID)
         try:
@@ -139,7 +138,7 @@ class SolutionOpt(Resource):
     @auth.login_required
     def get(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="productId", required=False, req_type=int, location='args')
+        parse.add(name="productId", required=True, location='args')
         pid = parse.parse_args().get("productId")
         p = Product.get(pid)
 
@@ -222,7 +221,7 @@ class PlatformOpt(Resource):
     @auth.login_required
     def get(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="productId", req_type=int, location='args')
+        parse.add(name="productId", location='args', required=True)
         pid = parse.args.get("productId")
         p = Product.get(pid)
         try:
@@ -236,8 +235,8 @@ class PlatformOpt(Resource):
     @is_admin
     def put(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="productId", req_type=int)
-        parse.add(name="platformId", req_type=int)
+        parse.add(name="productId", req_type=int, required=True)
+        parse.add(name="platformId", req_type=int, required=True)
         parse.add(name="name")
         pid = parse.parse_args().get("productId")
         pld = parse.parse_args().get("platformId")
@@ -257,8 +256,8 @@ class PlatformOpt(Resource):
     @is_admin
     def post(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="productId")
-        parse.add(name="name", required=False)
+        parse.add(name="productId", required=True)
+        parse.add(name="name", required=True)
 
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
@@ -279,7 +278,7 @@ class PlatformOpt(Resource):
     @is_admin
     def delete(self):
         parse = MyParse()
-        parse.add(name="id", required=False)
+        parse.add(name="id", required=True)
         id = parse.parse_args().get("id")
         p = Platform.get(id)
         try:
@@ -293,9 +292,9 @@ class PlatformOpt(Resource):
 class BuildOpt(Resource):
 
     @auth.login_required
-    def get(self):
+    def get(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="productId", req_type=int, location="args")
+        parse.add(name="productId", location="args", required=True)
         pid = parse.parse_args().get("productId")
         p = Product.get(pid)
         try:
@@ -307,10 +306,14 @@ class BuildOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def put(self):
-        pid = request.json.get("productId")
-        bid = request.json.get("buildId")
-        name = request.json.get("name")
+    def put(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="productId", req_type=int, required=True)
+        parse.add(name="buildId", req_type=int, required=True)
+        parse.add(name="name")
+        pid = parse.parse_args().get("productId")
+        bid = parse.parse_args().get("buildId")
+        name = parse.parse_args().get("name")
         p = Product.get(pid)
         b = Build.get(bid)
         if b not in p.builds_records:
@@ -324,10 +327,10 @@ class BuildOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def post(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
-        parse.add_argument("name", type=str, required=False, location='json', help="err buildId")
+    def post(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="productId", type=int, required=True)
+        parse.add(name="name", required=True)
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
         p = Product.get(pid)
@@ -344,9 +347,9 @@ class BuildOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def delete(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("id", type=str, required=False, location='json', help="err id")
+    def delete(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="id", type=int, required=True)
         id = parse.parse_args().get("id")
         b = Build.get(id)
         try:
@@ -360,8 +363,10 @@ class BuildOpt(Resource):
 class ErrorTypeOpt(Resource):
 
     @auth.login_required
-    def get(self):
-        pid = request.args.get("productId")
+    def get(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="productId", location='args', required=True)
+        pid = parse.parse_args().get("productId")
         p = Product.get(pid)
         try:
             e = [i.name for i in p.errorTypes_records]
@@ -372,10 +377,14 @@ class ErrorTypeOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def put(self):
-        pid = request.args.get("productId")
-        eid = request.args.get("errorId")
-        name = request.args.get("name")
+    def put(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="productId", req_type=int, required=True)
+        parse.add(name="errorId", req_type=int, required=True)
+        parse.add(name="name")
+        pid = parse.parse_args().get("productId")
+        eid = parse.parse_args().get("errorId")
+        name = parse.parse_args().get("name")
         p = Product.get(pid)
         e = ErrorType.get(eid)
         if e not in p.errorTypes_records:
@@ -388,11 +397,10 @@ class ErrorTypeOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def post(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("productId", type=str, required=True, location="json", help="error productId")
-        parse.add_argument("name", type=str, required=False, location='json', help="err errorType")
-
+    def post(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="productId", req_type=int, required=True)
+        parse.add(name="name")
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
         p = Product.get(pid)
@@ -409,9 +417,9 @@ class ErrorTypeOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def delete(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("id", type=str, required=False, location='json', help="err id")
+    def delete(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="id", type=int, required=True)
         id = parse.parse_args().get("id")
         e = ErrorType.get(id)
         try:
@@ -425,9 +433,10 @@ class ErrorTypeOpt(Resource):
 class ProjectOpt(Resource):
 
     @auth.login_required
-    def get(self):
-        pid = request.args.get("projectId")
-        p = Project.get(pid)
+    def get(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name='projectId', required=True)
+        p = Project.get(parse.parse_args().get("projectId"))
         try:
             e = [i.name for i in p.product]
             return jsonify(myResponse(0, e, "ok"))
@@ -437,9 +446,9 @@ class ProjectOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def post(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("name", type=str, required=False, location='json', help="err errorType")
+    def post(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="name", required=True)
         name = parse.parse_args().get("name")
         Project.verify_name(name)
         try:
@@ -452,9 +461,9 @@ class ProjectOpt(Resource):
 
     @auth.login_required
     @is_admin
-    def delete(self):
-        parse = reqparse.RequestParser(argument_class=MyRequestParser)
-        parse.add_argument("id", type=str, required=False, location='json', help="err id")
+    def delete(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="id", type=int, required=True)
         id = parse.parse_args().get("id")
         try:
             Project.get(id).delete()

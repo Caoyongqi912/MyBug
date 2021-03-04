@@ -21,10 +21,10 @@ log = get_log(__file__)
 
 class Login(Resource):
 
-    def post(self):
+    def post(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="account")
-        parse.add(name="password")
+        parse.add(name="account", required=True)
+        parse.add(name="password", required=True)
         account = parse.parse_args().get("account")
         password = parse.parse_args().get("password")
         user = User.query.filter(User.account == account).first()
@@ -59,12 +59,12 @@ class Register(Resource):
         :return: jsonify
         """
         parse = MyParse()
-        parse.add(name="account")
-        parse.add(name="name")
-        parse.add(name="password")
-        parse.add(name="departmentId", req_type=int, required=False)
-        parse.add(name="admin", req_type=bool, required=False, default=False)
-        parse.add(name="gender", req_type=bool, required=False, default=True)
+        parse.add(name="account", required=True)
+        parse.add(name="name", required=True)
+        parse.add(name="password", required=True)
+        parse.add(name="departmentId", type=int, required=False)
+        parse.add(name="admin", type=bool, required=False, default=False)
+        parse.add(name="gender", type=bool, required=False, default=True)
 
         departmentId = parse.parse_args().get("departmentId")
         account = parse.parse_args().get("account")
@@ -95,7 +95,7 @@ class DepartmentOpt(Resource):
         :return:  jsonify
         """
         parse = MyParse()
-        parse.add(name="name")
+        parse.add(name="name", required=True)
         name = parse.parse_args().get("name")
         Department.verify_name(name=name)
         try:
@@ -114,8 +114,8 @@ class DepartmentOpt(Resource):
         :return: jsonify
         """
         parse = MyParse()
-        parse.add(name="id")
-        parse.add(name="name")
+        parse.add(name="id", required=True)
+        parse.add(name="name", required=True)
         did = parse.parse_args().get("id")
         name = parse.parse_args().get("name")
         d = Department.get(did)
@@ -136,8 +136,7 @@ class DepartmentOpt(Resource):
         :return: jsonify
         """
         parse = MyParse()
-        parse.add(name="id")
-        parse.add(name="test",required=False)
+        parse.add(name="id", required=True)
         did = parse.parse_args().get("id")
         d = Department.get(did)
         try:
@@ -149,7 +148,20 @@ class DepartmentOpt(Resource):
             return jsonify(myResponse(1, None, e))
 
 
+class GetUsers(Resource):
+
+    @auth.login_required
+    def get(self):
+        """
+        获取用户列表
+        :return:
+        """
+
+        return jsonify(myResponse(0, User.getUsers(), "ok"))
+
+
 api_script = Api(myBug)
 api_script.add_resource(Login, "/login")
 api_script.add_resource(Register, "/register")
 api_script.add_resource(DepartmentOpt, "/departmentOpt")
+api_script.add_resource(GetUsers, '/getUsers')

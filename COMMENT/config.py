@@ -40,6 +40,7 @@ class DevelopmentConfig(Config):
     JSON_AS_ASCII = False  # 这个配置可以确保http请求返回的json数据中正常显示中文
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
 
+
     CELERY_RESULT_BACKEND = 'redis://{}:{}'.format(Config.HOST, Config.redisPort)
     CELERY_BROKER_URL = 'redis://{}:{}'.format(Config.HOST, Config.redisPort)
     CELERY_TIMEZONE = 'Asia/Shanghai'

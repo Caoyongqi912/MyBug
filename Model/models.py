@@ -43,7 +43,6 @@ class Base(db.Model):
             log.error(e)
             db.session.rollback()
 
-
     def delete(self):
         try:
             db.session.delete(self)
@@ -85,6 +84,8 @@ class User(Base):
     admin = db.Column(db.Boolean, default=False, comment="管理员")
     department = db.Column(db.Integer, db.ForeignKey("department.id"), nullable=True)
 
+    myNote = db.relationship("Note", backref="userNote", lazy='dynamic')  # 我的备注
+
     def __init__(self, account, name, password, gender, department, admin=None):
         self.account = account
         self.name = name
@@ -96,6 +97,16 @@ class User(Base):
     def get_uid(self):
         """get id"""
         return self.id
+
+    @classmethod
+    def getUsers(cls) -> list:
+        """返回所有用户"""
+        return [{
+            "uid": info.id,
+            "account": info.account,
+            "name": info.name,
+
+        } for info in cls.all()]
 
     def is_superuser(self) -> bool:
         """是否是管理员"""
@@ -273,11 +284,13 @@ class Bugs(Base):
     priority = db.Column(db.Enum("p1", "p2", "p3", "p4"), server_default="p3", comment="BUG优先级")
     status = db.Column(db.Enum("ACTIVE", "RESOLVED", "CLOSED"), server_default="ACTIVE", comment="BUG状态")
     confirmed = db.Column(db.Boolean, default=False, comment="是否确认")
+
     creater = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, comment="创建者")
     updater = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="修改者")
     assignedTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="指派给")
     resolvedBy = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="解决者")
     mailTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="抄送给")
+
     stepsBody = db.Column(db.TEXT, comment="步骤")
     solution = db.Column(db.Integer, db.ForeignKey("solution.id"), nullable=True, comment="解决方案")
     platform = db.Column(db.Integer, db.ForeignKey("platform.id"), nullable=True, comment="测试平台")
@@ -296,12 +309,97 @@ class Bugs(Base):
     def __repr__(self):
         return f"bug: {self.title}"
 
+    @property
+    def getBug(self) -> dict:
+        bugInfo = {
+            "bugID": self.id,
+            "createTime": self.create_time,
+            "title": self.title,
+            "level": self.level,
+            "priority": self.priority,
+            "status": self.status,
+            "confirmed": self.confirmed,
+            "creater": self.creater,
+            "updater": self.updater,
+            "assignedTo": self.assignedTo,
+            "resolvedBy": self.resolvedBy,
+            "mailTo": self.mailTo,
+            "stepsBody": self.stepsBody,
+            "solutionID": self.solution,
+            "platformID": self.platform,
+            "productID": self.product,
+            "buildID": self.build,
+            "errorTypeID": self.errorType,
+            "bugModel": self.bug_model
+
+        }
+        return bugInfo
+
+    def update(self, updateBody: dict):
+        """数据更新"""
+        try:
+            if updateBody.get("title"):
+                self.title = updateBody.get("title")
+
+            if updateBody.get("level"):
+                self.level = updateBody.get("level")
+
+            if updateBody.get("priority"):
+                self.priority = updateBody.get("priority")
+
+            if updateBody.get("status"):
+                self.status = updateBody.get("status")
+
+            if updateBody.get("confirmed"):
+                self.confirmed = updateBody.get("confirmed")
+
+            if updateBody.get("platformId"):
+                self.platform = updateBody.get("platformId")
+
+            if updateBody.get("buildId"):
+                self.build = updateBody.get("buildId")
+
+            if updateBody.get("errorTypeId"):
+                self.errorType = updateBody.get("errorTypeId")
+
+            if updateBody.get("assignedTo"):
+                self.assignedTo = updateBody.get("assignedTo")
+
+            if updateBody.get("mailTo"):
+                self.mailTo = updateBody.get("mailTo")
+
+            if updateBody.get("stepsBody"):
+                self.stepsBody = updateBody.get("stepsBody")
+
+            db.session.add(self)
+            db.session.commit()
+        except Exception as e:
+            log.error(e)
+            abort(myResponse(1, None, e))
+
+
+
+class Note(Base):
+    __tablename__ = "note"
+
+    bug = db.Column(db.Integer, db.ForeignKey("bugs.id"), nullable=False, comment="所属bug")
+    content = db.Column(db.TEXT, comment="备注内容")
+    noteMan = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, comment="备注人")
+
+    def __init__(self, bugID: int, content: str, noteMan: int):
+        self.bug = bugID
+        self.content = content
+        self.noteMan = noteMan
+
+    def __repr__(self):
+        return f"bugID: {self.bug}, note:{self.content}"
+
 
 class BugModel(Base):
     """bug模版"""
     __tablename__ = "bug_model"
     name = db.Column(db.String(32), unique=False, comment="bug模版")
-    content = db.Column(db.TEXT,comment="模版内容")
+    content = db.Column(db.TEXT, comment="模版内容")
     bugs = db.relationship("Bugs", backref="bugs", lazy='dynamic')
 
     def __init__(self, name):

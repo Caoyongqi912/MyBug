@@ -191,10 +191,6 @@ class Product(Base):
         self.projectId = projectId
         self.name = name
 
-
-
-
-
     @property
     def modules_records(self) -> list:
         return self.modules.filter_by().all()
@@ -359,7 +355,7 @@ class Bugs(Base):
             "buildID": self.build,
             "errorTypeID": self.errorType,
             "bugModel": self.bug_model,
-            "module":self.module
+            "module": self.module
 
         }
         return bugInfo

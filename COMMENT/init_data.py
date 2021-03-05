@@ -79,5 +79,12 @@ def add_error(nums: int):
     print("ok")
 
 
+def add_module():
+    create_app().app_context().push()
+    mo = ['登陆',"注册","联系人","通话","收藏","删除"]
+    for i in mo:
+
+        Module(name=i,productId=9).save()
+
 if __name__ == '__main__':
-    add_solution(10)
+    add_module( )

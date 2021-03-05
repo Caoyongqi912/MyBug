@@ -184,9 +184,20 @@ class Product(Base):
     # 所属项目
     projectId = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False, comment='所属项目')
 
+    # 所有模块
+    modules = db.relationship("Module", backref="product_modules", lazy="dynamic", cascade="save-update,delete")
+
     def __init__(self, name, projectId):
         self.projectId = projectId
         self.name = name
+
+
+
+
+
+    @property
+    def modules_records(self) -> list:
+        return self.modules.filter_by().all()
 
     @property
     def bugs_records(self):
@@ -276,6 +287,21 @@ class ErrorType(Base):
         return f"error_type: {self.name}"
 
 
+class Module(Base):
+    """bug模块类"""
+    __tablename__ = "module"
+    name = db.Column(db.String(30), unique=False, comment="模块名")
+    product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=True, comment='所属产品')
+    bugs = db.relationship("Bugs", backref="model_bugs", lazy='dynamic')
+
+    def __init__(self, name, productId):
+        self.name = name
+        self.product = productId
+
+    def __repr__(self):
+        return f"module: {self.name}"
+
+
 class Bugs(Base):
     """bug类"""
     __tablename__ = "bugs"
@@ -294,6 +320,8 @@ class Bugs(Base):
     stepsBody = db.Column(db.TEXT, comment="步骤")
     solution = db.Column(db.Integer, db.ForeignKey("solution.id"), nullable=True, comment="解决方案")
     platform = db.Column(db.Integer, db.ForeignKey("platform.id"), nullable=True, comment="测试平台")
+    module = db.Column(db.Integer, db.ForeignKey("module.id"), nullable=True, comment="所属模块")
+
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=True, comment="所属项目")
     build = db.Column(db.Integer, db.ForeignKey("build.id"), nullable=False, comment="版本")
     errorType = db.Column(db.Integer, db.ForeignKey("error_type.id"), nullable=True, comment="错误类型")
@@ -330,7 +358,8 @@ class Bugs(Base):
             "productID": self.product,
             "buildID": self.build,
             "errorTypeID": self.errorType,
-            "bugModel": self.bug_model
+            "bugModel": self.bug_model,
+            "module":self.module
 
         }
         return bugInfo
@@ -338,6 +367,9 @@ class Bugs(Base):
     def update(self, updateBody: dict):
         """数据更新"""
         try:
+            if updateBody.get("module"):
+                self.module = updateBody.get("module")
+
             if updateBody.get("title"):
                 self.title = updateBody.get("title")
 
@@ -378,7 +410,7 @@ class Bugs(Base):
             abort(myResponse(1, None, e))
 
     @classmethod
-    def optGetBugInfos(cls, opt):
+    def optGetBugInfos(cls, opt) -> list:
         from flask import g
 
         if opt == "all":
@@ -391,6 +423,7 @@ class Bugs(Base):
             return Bugs.query.filter(Bugs.assignedTo == g.user.id).order_by(desc(Bugs.id)).all()
         elif opt == "resolvedByMe":
             return Bugs.query.filter(Bugs.resolvedBy == g.user.id).order_by(desc(Bugs.id)).all()
+
 
 class Note(Base):
     __tablename__ = "note"

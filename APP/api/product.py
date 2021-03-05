@@ -10,7 +10,7 @@ from APP.api import myBug
 from COMMENT.ParamParse import MyParse
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
-from Model.models import Product, Solution, Build, Platform, ErrorType, Project
+from Model.models import Product, Solution, Build, Platform, ErrorType, Project, Module
 from .errors_or_auth import is_admin
 from APP import auth, db
 
@@ -24,11 +24,12 @@ class ProductOpt(Resource):
     def post(self) -> jsonify:
         parse = MyParse()
         parse.add(name="name", required=True)
-        parse.add(name="solutions", type=list, required=False)
-        parse.add(name="platforms", type=list, required=False)
-        parse.add(name="builds", type=list, required=False)
-        parse.add(name="errorTypes", type=list, required=False)
-        parse.add(name="projectId", type=int, required=False)
+        parse.add(name="solutions", type=list)
+        parse.add(name="platforms", type=list)
+        parse.add(name="builds", type=list)
+        parse.add(name="errorTypes", type=list)
+        parse.add(name="projectId", type=int)
+        parse.add(name='module', type=list)
 
         name = parse.parse_args().get("name")
         solutions = parse.parse_args().get("solutions")
@@ -36,6 +37,7 @@ class ProductOpt(Resource):
         builds = parse.parse_args().get("builds")
         errorTypes = parse.parse_args().get("errorTypes")
         projectId = parse.parse_args().get(("projectId"))
+        modules = parse.parse_args().get("module")
 
         Project.get(projectId)
         Product.verify_name(name)
@@ -58,6 +60,11 @@ class ProductOpt(Resource):
                 for e in errorTypes:
                     ErrorType.verify_name(e)
                     ErrorType(name=e, productId=pro.id).save()
+
+            if modules:
+                for m in modules:
+                    Module.verify_name(m)
+                    Module(name=m, productId=pro.id).save()
 
             return jsonify(myResponse(0, None, "ok"))
 
@@ -86,6 +93,7 @@ class ProductOpt(Resource):
                  "platforms": [{"platform_name": p.name, "id": p.id} for p in i.platforms_records],
                  "builds": [{"build_name": b.name, "id": b.id} for b in i.builds_records],
                  "errorTypes": [{"error_name": e.name, "id": e.id} for e in i.errorTypes_records],
+                 "modules": [{'module_name': m.name, "id": m.id} for m in i.modules_records]
                  }
                 for i in ps]
             return jsonify(myResponse(0, productInfo, "ok"))
@@ -430,6 +438,76 @@ class ErrorTypeOpt(Resource):
             return jsonify(myResponse(1, None, str(e)))
 
 
+class ModuleOpt(Resource):
+
+    @auth.login_required
+    def get(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="productId", location='args', required=True)
+        pid = parse.parse_args().get("productId")
+        p = Product.get(pid)
+        try:
+            e = [i.name for i in p.modules_records]
+            return jsonify(myResponse(0, e, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def post(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="productId", req_type=int, required=True)
+        parse.add(name="name", required=True)
+        pid = parse.parse_args().get("productId")
+        name = parse.parse_args().get("name")
+        p = Product.get(pid)
+
+        if name in [i.name for i in p.modules_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
+        try:
+            m = Module(name, pid)
+            m.save()
+            return jsonify(myResponse(0, m.id, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def delete(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="id", type=int, required=True)
+
+        e = Module.get(parse.parse_args().get("id"))
+        try:
+            e.delete()
+            return jsonify(myResponse(0, None, "ok"))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(1, None, str(e)))
+
+    @auth.login_required
+    @is_admin
+    def put(self) -> jsonify:
+        parse = MyParse()
+        parse.add(name="productId", req_type=int, required=True)
+        parse.add(name="moduleId", req_type=int, required=True)
+        parse.add(name="name")
+        pid = parse.parse_args().get("productId")
+        mid = parse.parse_args().get("moduleId")
+        name = parse.parse_args().get("name")
+        p = Product.get(pid)
+        e = Module.get(mid)
+        if e not in p.modules_records:
+            return jsonify(myResponse(21, None, f"Product:{pid}  Not included {mid}"))
+        if name in [i.name for i in p.modules_records]:
+            return jsonify(myResponse(31, None, f"name:{name} already exists "))
+        e.name = name
+        e.save()
+        return jsonify(0, e.id, "ok")
+
+
 class ProjectOpt(Resource):
 
     @auth.login_required
@@ -479,4 +557,5 @@ api_script.add_resource(SolutionOpt, '/solutionOpt')
 api_script.add_resource(BuildOpt, '/buildOpt')
 api_script.add_resource(ErrorTypeOpt, '/errorTypeOpt')
 api_script.add_resource(PlatformOpt, '/platformOpt')
+api_script.add_resource(ModuleOpt, "/moduleOpt")
 api_script.add_resource(ProjectOpt, '/projectOpt')

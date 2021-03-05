@@ -377,7 +377,20 @@ class Bugs(Base):
             log.error(e)
             abort(myResponse(1, None, e))
 
+    @classmethod
+    def optGetBugInfos(cls, opt):
+        from flask import g
 
+        if opt == "all":
+            return Bugs.all()
+        elif opt == "unClose":
+            return Bugs.query.filter(Bugs.status == "CLOSED").order_by(desc(Bugs.id)).all()
+        elif opt == "createByMe":
+            return Bugs.query.filter(Bugs.creater == g.user.id).order_by(desc(Bugs.id)).all()
+        elif opt == "assignedToMe":
+            return Bugs.query.filter(Bugs.assignedTo == g.user.id).order_by(desc(Bugs.id)).all()
+        elif opt == "resolvedByMe":
+            return Bugs.query.filter(Bugs.resolvedBy == g.user.id).order_by(desc(Bugs.id)).all()
 
 class Note(Base):
     __tablename__ = "note"

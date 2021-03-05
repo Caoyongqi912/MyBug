@@ -125,9 +125,14 @@ class SearchParamsParse:
 
     def filter(self) -> list:
         sql = self.sql + self._paramParse()
-        print(sql)
-        res = self.eng.execute(sql)
-        return res.fetchall()
+        try:
+            res = self.eng.execute(sql)
+
+            return res.fetchall()
+        except Exception as e:
+
+            abort(myResponse(93, None, e))
+
 
 if __name__ == '__main__':
     a = [{'key': 'id', 'condition': '>', 'val': 1},

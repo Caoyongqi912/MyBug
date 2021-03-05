@@ -300,29 +300,49 @@ class SearchBug(Resource):
 
         parse = MyParse()
         parse.add(name="option", choices=['and', 'or'], required=True)
-        parse.add(name="searchBody", type=list, required=False)
-        body = parse.parse_args().get("searchBody")
-        opt = parse.parse_args().get("option")
+        parse.add(name="searchBody", type=list, required=True)
+        bugInfos = [{
+            "bugID": info[0],
+            "createTime": info[1],
+            "title": info[3],
+            "level": info[4],
+            "priority": info[5],
+            "status": info[6],
+            "confirmed": info[7],
+            "creater": info[8],
+            "updater": info[1],
+            "solutionID": info[14]
+        } for info in
+            SearchParamsParse(parse.parse_args().get("searchBody"), parse.parse_args().get("option")).filter()]
 
-        infos = SearchParamsParse(body, opt).filter()
-        bugInfos = []
-        for info in infos:
-            bug = {
-                "bugID": info[0],
-                "createTime": info[1],
-                "title":info[3],
-                "level": info[4],
-                "priority": info[5],
-                "status": info[6],
-                "confirmed": info[7],
-                "creater":info[8],
-                "updater": info[1],
-                "solutionID": info[14]
-            }
-            bugInfos.append(bug)
+        return jsonify(myResponse(0, bugInfos, "ok"))
 
+    @auth.login_required
+    def get(self) -> jsonify:
+        """
+        一些固定搜索哦
+        :return:
+        """
+        parse = MyParse()
+        parse.add(name="opt",
+                  choices=['all', 'unClose', 'createByMe', 'assignedToMe', 'resolvedByMe'],
+                  location="args",
+                  required=True)
 
-        return  jsonify(myResponse(0,bugInfos,"ok"))
+        infos = [{
+            "bugID": bug.id,
+            "createTime": bug.create_time,
+            "title": bug.title,
+            "level": bug.level,
+            "priority": bug.priority,
+            "status": bug.status,
+            "confirmed": bug.confirmed,
+            "creater": bug.creater,
+            "updater": bug.updater,
+            "solutionID": bug.solution
+        } for bug in Bugs.optGetBugInfos(parse.parse_args().get("opt"))]
+        return jsonify(myResponse(0, infos, 'ok'))
+
 
 api_script = Api(myBug)
 api_script.add_resource(MyBugs, "/bugOpt")

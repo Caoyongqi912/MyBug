@@ -160,6 +160,7 @@ class GetUsers(Resource):
         return jsonify(myResponse(0, User.getUsers(), "ok"))
 
 
+
 api_script = Api(myBug)
 api_script.add_resource(Login, "/login")
 api_script.add_resource(Register, "/register")

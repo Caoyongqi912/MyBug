@@ -108,6 +108,11 @@ class User(Base):
 
         } for info in cls.all()]
 
+    @property
+    def getName(self):
+        return self.name
+
+
     def is_superuser(self) -> bool:
         """是否是管理员"""
         return self.admin

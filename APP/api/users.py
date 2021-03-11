@@ -15,12 +15,12 @@ from Model.models import User, Department
 from COMMENT.Log import get_log
 from COMMENT.myBlinker import login_signal
 from COMMENT.ParamParse import MyParse
+from COMMENT.const import ResponseConst, ResponseMsgConst
 
 log = get_log(__file__)
 
 
 class Login(Resource):
-
     def post(self) -> jsonify:
         parse = MyParse()
         parse.add(name="account", required=True)
@@ -35,12 +35,12 @@ class Login(Resource):
                 # 发送信号
                 login_signal.send(username=account)
 
-                return jsonify(myResponse(0, token, "ok"))
+                return jsonify(myResponse(ResponseConst.SUCCESS, token, ResponseMsgConst.OK))
             else:
                 log.error(f"<{__class__}>  error password !")
                 return jsonify(myResponse(1, None, "err password"))
         log.error(f"<{__class__}>  err account !")
-        return jsonify(myResponse(1, None, "err account"))
+        return jsonify(myResponse(ResponseConst.ERROR, None, ResponseMsgConst.ERROR_ACCOUNT))
 
 
 @myBug.route("/getToken", methods=["POST"])
@@ -82,7 +82,7 @@ class Register(Resource):
         u = User(account=account, name=name, password=password, gender=gender, department=departmentId, admin=admin)
         u.save()
 
-        return jsonify(myResponse(0, u.id, "ok"))
+        return jsonify(myResponse(ResponseConst.SUCCESS, u.id, ResponseMsgConst.OK))
 
 
 class DepartmentOpt(Resource):
@@ -101,10 +101,12 @@ class DepartmentOpt(Resource):
         try:
             d = Department(name=name)
             d.save()
-            return jsonify(myResponse(0, d.id, "ok"))
-        except Exception as  e:
+            return jsonify(myResponse(ResponseConst.SUCCESS, d.id, ResponseMsgConst.OK))
+        except Exception as e:
             log.error(e)
-            return jsonify(myResponse(1, None, e))
+            db.session.rollback()
+
+            return jsonify(myResponse(ResponseConst.ERROR, None, ResponseMsgConst.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -122,11 +124,11 @@ class DepartmentOpt(Resource):
         try:
             d.name = name
             d.save()
-            return jsonify(myResponse(0, d.id, "ok"))
+            return jsonify(myResponse(ResponseConst.SUCCESS, d.id, ResponseMsgConst.OK))
         except Exception as e:
             log.error(e)
             db.session.rollback()
-            return jsonify(myResponse(1, None, e))
+            return jsonify(myResponse(ResponseConst.ERROR, None, ResponseMsgConst.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -137,15 +139,15 @@ class DepartmentOpt(Resource):
         """
         parse = MyParse()
         parse.add(name="id", required=True)
-        did = parse.parse_args().get("id")
-        d = Department.get(did)
+
+        d = Department.get(parse.parse_args().get("id"))
         try:
             d.delete()
-            return jsonify(myResponse(0, None, "ok"))
+            return jsonify(myResponse(ResponseConst.SUCCESS, None, ResponseMsgConst.OK))
         except Exception as e:
             log.error(e)
             db.session.rollback()
-            return jsonify(myResponse(1, None, e))
+            return jsonify(myResponse(ResponseConst.ERROR, None, ResponseMsgConst.SOME_ERROR_TRY_AGAIN))
 
 
 class GetUsers(Resource):
@@ -156,9 +158,7 @@ class GetUsers(Resource):
         获取用户列表
         :return:
         """
-
-        return jsonify(myResponse(0, User.getUsers(), "ok"))
-
+        return jsonify(myResponse(ResponseConst.SUCCESS, User.getUsers(), ResponseMsgConst.OK))
 
 
 api_script = Api(myBug)

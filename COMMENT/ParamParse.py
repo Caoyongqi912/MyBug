@@ -5,8 +5,9 @@
 # @File    : ParamParse.py
 
 from flask import request
-from flask_restful import abort, reqparse
+from flask_restful import abort
 from COMMENT.myResponse import myResponse
+from COMMENT.const import *
 
 
 class MyParse:
@@ -40,24 +41,24 @@ class MyParse:
         for kw in self.args:
             if kw['required'] is True:
                 if not self.body.get(kw['name']) or self.body.get(kw['name']) == "":
-                    abort(myResponse(44, None, f"{kw['name']}: cant not be empty or '' "))
+                    abort(myResponse(TypeError, None, cantEmpty(kw['name'])))
 
                 # 类型判读
                 if not isinstance(self.body[kw['name']], kw['type']):
-                    abort(myResponse(44, None, f"{kw['name']}: error type"))
+                    abort(myResponse(TypeError, None, errorType(kw['name'])))
                 # choice 判断
                 if kw.get('choices'):
                     if self.body[kw['name']] not in kw['choices']:
-                        abort(myResponse(44, None, f"{kw['name']}: error value"))
+                        abort(myResponse(TypeError, None, errorValue(kw['name'])))
             else:
                 if self.body.get(kw['name']):
                     # 类型判读
                     if not isinstance(self.body[kw['name']], kw['type']):
-                        abort(myResponse(44, None, f"{kw['name']}: error type"))
+                        abort(myResponse(TypeError, None, f"{kw['name']}: error type"))
                     # choice 判断
                     if kw.get('choices'):
                         if self.body[kw['name']] not in kw['choices']:
-                            abort(myResponse(44, None, f"{kw['name']}: error value"))
+                            abort(myResponse(TypeError, None, f"{kw['name']}: error value"))
 
                 if kw.get("default") and self.body.get(kw['name']) is None:
                     self.body[kw['name']] = kw.get('default')
@@ -104,9 +105,9 @@ class SearchParamsParse:
     def _verify(self, body: list) -> list:
         for b in body:
             if not b.get("key") and not b.get("condition") and not b.get("val"):
-                abort(myResponse(99, None, "invalid params"))
+                abort(myResponse(SQL_PARAM_ERROR, None, "invalid params"))
             if b.get("condition") not in self.condition:
-                abort(myResponse(99, None, f"{b.get['condition']}  is  invalid "))
+                abort(myResponse(SQL_PARAM_ERROR, None, f"{b.get['condition']}  is  invalid "))
 
         return body
 
@@ -127,16 +128,16 @@ class SearchParamsParse:
         sql = self.sql + self._paramParse()
         try:
             res = self.eng.execute(sql)
-
             return res.fetchall()
         except Exception as e:
 
-            abort(myResponse(93, None, e))
+            abort(myResponse(SQL_ERROR, None, SOME_ERROR_TRY_AGAIN))
 
 
 if __name__ == '__main__':
-    a = [{'key': 'id', 'condition': '>', 'val': 1},
-         {'key': 'level', 'condition': '=', 'val': 'p1'}]
-
-    s = SearchParamsParse(a, "and")
-    s.filter()
+    # a = [{'key': 'id', 'condition': '>', 'val': 1},
+    #      {'key': 'level', 'condition': '=', 'val': 'p1'}]
+    #
+    # s = SearchParamsParse(a, "and")
+    # s.filter()
+    MyParse().test()

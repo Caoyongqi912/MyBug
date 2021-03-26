@@ -3,12 +3,16 @@
 # @Time    : 2021/1/11 下午4:41
 # @Author  : cyq
 # @File    : bugs.py
+import os
 
 from flask_restful import Api, Resource
 from APP import auth
 from flask import g, jsonify
+
+from COMMENT.const import *
 from Model.models import *
 from APP.api import myBug
+from bugFiles.savefile import getFilePath
 from .errors_or_auth import is_admin
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
@@ -56,12 +60,12 @@ class MyBugs(Resource):
         User.get(assignedTo)
 
         if product not in project.product_records:
-            return jsonify(myResponse(21, None, f"Project： Not included productId {productId}"))
+            return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
         if platformId not in [i.id for i in product.platforms_records]:
-            return jsonify(myResponse(21, None, f"Product： Not included platformId {platformId}"))
+            return jsonify(myResponse(Error_Relation, None, f"Product： Not included platformId {platformId}"))
 
         if buildId not in [i.id for i in product.builds_records]:
-            return jsonify(myResponse(21, None, f"Product： Not included buildId {buildId}"))
+            return jsonify(myResponse(Error_Relation, None, f"Product： Not included buildId {buildId}"))
 
         try:
             u = Bugs(title=title, creater=g.user.id, stepsBody=stepsBody, product=productId, build=buildId)
@@ -69,10 +73,10 @@ class MyBugs(Resource):
             u.level = level
 
             u.save()
-            return jsonify(myResponse(0, u.id, "ok"))
+            return jsonify(myResponse(SUCCESS, u.id, "ok"))
         except ErrorType as e:
             log.error(e)
-            return jsonify(myResponse(1, None, str(e)))
+            return jsonify(myResponse(ERROR, None, str(e)))
 
     @auth.login_required
     def put(self) -> jsonify:
@@ -342,6 +346,44 @@ class SearchBug(Resource):
             "solutionID": bug.solution
         } for bug in Bugs.optGetBugInfos(parse.parse_args().get("opt"))]
         return jsonify(myResponse(0, infos, 'ok'))
+
+
+@myBug.route("/uploadFiled/<path:bugID>", methods=['POST'])
+@auth.login_required
+def uploadFiled(bugID) -> jsonify:
+    from flask import request
+    from werkzeug.utils import secure_filename
+    from faker import Faker
+    f = Faker()
+
+    file = request.files.get('file')
+    if not bugID:
+        return jsonify(myResponse(ERROR, None, cantEmpty("bugID")))
+    if not file:
+        return jsonify(myResponse(ERROR, None, NO_FIlE))
+    Bugs.get(bugID)
+    fileName = secure_filename(file.filename)
+    filePath = getFilePath(f.pystr() + '_' + fileName)
+
+    bf = BugFile(fileName=fileName, filePath=filePath, bugID=bugID)
+
+    try:
+        file.save(filePath)
+        bf.save()
+        return jsonify(myResponse(SUCCESS, None, OK))
+    except Exception as e:
+        log.error(e)
+        return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+
+
+@myBug.route("/getFile", methods=["GET"])
+def getfile() -> jsonify:
+    from flask import send_file
+    parse = MyParse()
+    parse.add(name="fileID", required=True, location="args")
+    fileID = parse.parse_args().get("fileID")
+    file = BugFile.get(fileID)
+    return send_file(file.filePath)
 
 
 api_script = Api(myBug)

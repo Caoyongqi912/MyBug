@@ -6,6 +6,7 @@
 import requests
 import random
 from faker import Faker
+import os
 
 f = Faker()
 
@@ -16,13 +17,13 @@ class MyRequest:
     def __init__(self):
         pass
 
-    def go(self, method, url, params=None, body=None, auth=("cyq", "cyq")):
+    def go(self, method, url, params=None, body=None, files=None, auth=("cyq", "cyq")):
 
         if method == "GET":
             return requests.get(url=self.Host + url, params=params, json=body, auth=auth)
 
         elif method == "POST":
-            resp = requests.post(url=self.Host + url, params=params, json=body, auth=auth)
+            resp = requests.post(url=self.Host + url, params=params, json=body, auth=auth, files=files)
             return resp
 
         elif method == "PUT":
@@ -80,12 +81,18 @@ class MyRequest:
 
     def getOneBug(self):
         params = {"bugID": 1}
-        json = {'name':'cyq'}
-        rep = self.go(method="GET", url="api/closeBug", params=params,body=json ,auth=('cyq', 'cyq'))
+        json = {'name': 'cyq'}
+        rep = self.go(method="GET", url="api/closeBug", params=params, body=json, auth=('cyq', 'cyq'))
 
+        print(rep.json())
+
+    def upload(self):
+        testpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/test.txt"
+        file = {"file": open(testpath, "rb")}
+        rep = self.go(method="POST", url="api/uploadFiled/1", files=file, auth=('cyq', 'cyq'))
         print(rep.json())
 
 
 if __name__ == '__main__':
     m = MyRequest()
-    m.getOneBug()
+    m.upload()

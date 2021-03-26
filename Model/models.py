@@ -12,6 +12,7 @@ from sqlalchemy import desc
 from APP import db
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
+from hashlib import md5
 
 log = get_log(__file__)
 
@@ -302,6 +303,22 @@ class Module(Base):
         return f"module: {self.name}"
 
 
+class BugFile(Base):
+    """bug 文件"""
+    __tablename__ = "bug_file"
+    fileName = db.Column(db.String(60), comment="文件名")
+    filePath = db.Column(db.String(100), comment="文件地址")
+    bugID = db.Column(db.Integer, db.ForeignKey("bugs.id"), comment="所属bug")
+
+    def __init__(self, fileName, filePath, bugID):
+        self.fileName = fileName
+        self.filePath = filePath
+        self.bugID = bugID
+
+    def __repr__(self):
+        return f"fileName: {self.fileName}"
+
+
 class Bugs(Base):
     """bug类"""
     __tablename__ = "bugs"
@@ -325,7 +342,8 @@ class Bugs(Base):
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=True, comment="所属项目")
     build = db.Column(db.Integer, db.ForeignKey("build.id"), nullable=False, comment="版本")
     errorType = db.Column(db.Integer, db.ForeignKey("error_type.id"), nullable=True, comment="错误类型")
-    bug_model = db.Column(db.Integer, db.ForeignKey("bug_model.id"), nullable=True, comment="应用模版")
+
+    bugFile = db.relationship('BugFile', backref="bug_file", lazy='dynamic')
 
     def __init__(self, title, creater, stepsBody, product, build):
         self.title = title
@@ -358,11 +376,17 @@ class Bugs(Base):
             "productID": self.product,
             "buildID": self.build,
             "errorTypeID": self.errorType,
-            "bugModel": self.bug_model,
-            "module": self.module
+            "module": self.module,
+            "bugFiles": self.myFiles()
 
         }
         return bugInfo
+
+    def myFiles(self):
+        """
+        [{fileName:xxx,filePath:xxx}]
+        """
+        return [{"id":f.id,"fileName": f.fileName, "filePath": f.filePath} for f in self.bugFile.filter_by().all()]
 
     def update(self, updateBody: dict):
         """数据更新"""
@@ -446,7 +470,7 @@ class BugModel(Base):
     __tablename__ = "bug_model"
     name = db.Column(db.String(32), unique=False, comment="bug模版")
     content = db.Column(db.TEXT, comment="模版内容")
-    bugs = db.relationship("Bugs", backref="bugs", lazy='dynamic')
 
-    def __init__(self, name):
+    def __init__(self, name: str, content: str):
         self.name = name
+        self.content = content

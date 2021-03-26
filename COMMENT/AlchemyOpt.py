@@ -32,3 +32,8 @@ class MyBugBaseQuery(BaseQuery):
         elif rv.status == 0:
             abort(400, **myResponse(1, None, f"{name}: id 已删除"))
         return rv
+
+
+
+
+

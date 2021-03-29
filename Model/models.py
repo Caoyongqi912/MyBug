@@ -106,8 +106,22 @@ class User(Base):
             "uid": info.id,
             "account": info.account,
             "name": info.name,
+            "department": info.department,
+            "ctime":info.create_time
 
         } for info in cls.all()]
+
+    @classmethod
+    def get(cls, id):
+        user = super(User, cls).get(id)
+        info = {
+            "uid": user.id,
+            "account": user.account,
+            "name": user.name,
+            "department": user.department,
+            "ctime": user.create_time
+        }
+        return info
 
     @property
     def getName(self):
@@ -163,6 +177,14 @@ class Project(Base):
     def __init__(self, name):
         self.name = name
 
+    @classmethod
+    def get(cls, id):
+        pro = super(Project, cls).get(id)
+        info = {
+            "name": pro.name,
+        }
+        return info
+
     @property
     def product_records(self):
         return self.product.filter_by().all()
@@ -195,6 +217,16 @@ class Product(Base):
     def __init__(self, name, projectId):
         self.projectId = projectId
         self.name = name
+
+    @classmethod
+    def get(cls, id):
+        pro = super(Product, cls).get(id)
+        info = {
+            "name": pro.name,
+            "ctime": pro.create_time
+
+        }
+        return info
 
     @property
     def modules_records(self) -> list:
@@ -264,10 +296,26 @@ class Build(Base):
     name = db.Column(db.String(30), unique=False, comment="版本编号")
     product = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False, comment='所属产品')
     bugs = db.relationship("Bugs", backref="build_bugs", lazy='dynamic')
+    builder = db.Column(db.String(20), comment="构建者")
+    desc = db.Column(db.String(50), comment="描述")
 
-    def __init__(self, name, productId):
+    def __init__(self, name, productId, builder, desc):
         self.name = name
         self.product = productId
+        self.builder = builder
+        self.desc = desc
+
+    @classmethod
+    def get(cls, id):
+        build = super(Build, cls).get(id)
+        info = {
+            "name": build.name,
+            "builder": build.builder,
+            "desc": build.desc,
+            "ctime": build.create_time
+
+        }
+        return info
 
     def __repr__(self):
         return f"build: {self.name}"
@@ -355,6 +403,34 @@ class Bugs(Base):
     def __repr__(self):
         return f"bug: {self.title}"
 
+    @classmethod
+    def get(cls, id):
+        bug = super(Bugs, cls).get(id)
+        bugInfo = {
+            "bugID": bug.id,
+            "createTime": bug.create_time,
+            "title": bug.title,
+            "level": bug.level,
+            "priority": bug.priority,
+            "status": bug.status,
+            "confirmed": bug.confirmed,
+            "creater": bug.creater,
+            "updater": bug.updater,
+            "assignedTo": bug.assignedTo,
+            "resolvedBy": bug.resolvedBy,
+            "mailTo": bug.mailTo,
+            "stepsBody": bug.stepsBody,
+            "solutionID": bug.solution,
+            "platformID": bug.platform,
+            "productID": bug.product,
+            "buildID": bug.build,
+            "errorTypeID": bug.errorType,
+            "module": bug.module,
+            "bugFiles": bug.myFiles()
+
+        }
+        return bugInfo
+
     @property
     def getBug(self) -> dict:
         bugInfo = {
@@ -386,7 +462,7 @@ class Bugs(Base):
         """
         [{fileName:xxx,filePath:xxx}]
         """
-        return [{"id":f.id,"fileName": f.fileName, "filePath": f.filePath} for f in self.bugFile.filter_by().all()]
+        return [{"id": f.id, "fileName": f.fileName, "filePath": f.filePath} for f in self.bugFile.filter_by().all()]
 
     def update(self, updateBody: dict):
         """数据更新"""

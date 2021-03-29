@@ -92,7 +92,15 @@ class MyRequest:
         rep = self.go(method="POST", url="api/uploadFiled/1", files=file, auth=('cyq', 'cyq'))
         print(rep.json())
 
+    def search(self):
+        json = {
+            "opt": 1,
+            "searchID":1
+        }
+        rep = self.go(method="POST", url="api/search", body=json, auth=("cyq", "cyq"))
+        print(rep.json())
+
 
 if __name__ == '__main__':
     m = MyRequest()
-    m.upload()
+    m.search()

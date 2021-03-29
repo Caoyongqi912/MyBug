@@ -65,20 +65,6 @@ class MyParse:
 
         return self.body
 
-    def test(self):
-        method = getattr(request, "method", {})
-        data = getattr(request, "data", {})
-        args = getattr(request, "args", {})
-        value = getattr(request, "values", {})
-        form = getattr(request, "form", {})
-        json = getattr(request, "json", {})
-
-        print("method", method)
-        print(f"data  {data}")
-        print(f"args  {args}")
-        print(f"value {value}")
-        print(f"form  {form}")
-        print(f"json  {json}")
 
 
 class Constant:
@@ -140,4 +126,4 @@ if __name__ == '__main__':
     #
     # s = SearchParamsParse(a, "and")
     # s.filter()
-    MyParse().test()
+    pass

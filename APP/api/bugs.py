@@ -3,12 +3,10 @@
 # @Time    : 2021/1/11 下午4:41
 # @Author  : cyq
 # @File    : bugs.py
-import os
 
 from flask_restful import Api, Resource
 from APP import auth
 from flask import g, jsonify
-
 from COMMENT.const import *
 from Model.models import *
 from APP.api import myBug

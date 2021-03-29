@@ -3,7 +3,7 @@
 # @Time    : 2021/1/5 下午7:51
 # @Author  : cyq
 # @File    : product.py
-
+from flask import g
 from flask_restful import Api, Resource
 from flask import jsonify
 from APP.api import myBug
@@ -14,6 +14,7 @@ from Model.models import Product, Solution, Build, Platform, ErrorType, Project,
 from .errors_or_auth import is_admin
 from APP import auth, db
 from COMMENT.const import *
+
 log = get_log(__file__)
 
 
@@ -237,7 +238,7 @@ class PlatformOpt(Resource):
             return jsonify(myResponse(SUCCESS, s, OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None,SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -339,14 +340,16 @@ class BuildOpt(Resource):
         parse = MyParse()
         parse.add(name="productId", type=int, required=True)
         parse.add(name="name", required=True)
+        parse.add(name="desc",type=str)
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
+        desc = parse.parse_args().get("desc")
         p = Product.get(pid)
         # 验证同一 product name唯一
         if name in [i.name for i in p.builds_records]:
             return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
         try:
-            b = Build(name, pid)
+            b = Build(name, pid, g.user.name, desc)
             b.save()
             return jsonify(myResponse(SUCCESS, b.id, OK))
         except Exception as e:

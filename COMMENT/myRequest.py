@@ -100,7 +100,22 @@ class MyRequest:
         rep = self.go(method="POST", url="api/search", body=json, auth=("cyq", "cyq"))
         print(rep.json())
 
+    def removeFile(self):
+        json = {
+            "fileID":4
+        }
+        rep = self.go(method="POST", url="api/delFile", body=json, auth=("cyq", "cyq"))
+        print(rep.json())
+
+    def putFile(self):
+        json = {
+            "fileID":6,
+            "fileName":"xixixiahal"
+        }
+        rep = self.go(method="POST", url="api/putFileName", body=json, auth=("cyq", "cyq"))
+        print(rep.json())
 
 if __name__ == '__main__':
     m = MyRequest()
-    m.search()
+    m.upload()
+

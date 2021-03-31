@@ -41,7 +41,6 @@ class MyBugs(Resource):
         parse.add(name="stepsBody")
 
         productId = parse.parse_args().get("productId")
-
         projectId = parse.parse_args().get("projectId")
         platformId = parse.parse_args().get("platformId")
         buildId = parse.parse_args().get("buildId")
@@ -61,7 +60,6 @@ class MyBugs(Resource):
             return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
         if platformId not in [i.id for i in product.platforms_records]:
             return jsonify(myResponse(Error_Relation, None, f"Product： Not included platformId {platformId}"))
-
         if buildId not in [i.id for i in product.builds_records]:
             return jsonify(myResponse(Error_Relation, None, f"Product： Not included buildId {buildId}"))
 
@@ -69,7 +67,6 @@ class MyBugs(Resource):
             u = Bugs(title=title, creater=g.user.id, stepsBody=stepsBody, product=productId, build=buildId)
             u.priority = priority
             u.level = level
-
             u.save()
             return jsonify(myResponse(SUCCESS, u.id, "ok"))
         except ErrorType as e:
@@ -368,13 +365,14 @@ def uploadFiled(bugID) -> jsonify:
     try:
         file.save(filePath)
         bf.save()
-        return jsonify(myResponse(SUCCESS, None, OK))
+        return jsonify(myResponse(SUCCESS, bf.id, OK))
     except Exception as e:
         log.error(e)
         return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
 
 
 @myBug.route("/getFile", methods=["GET"])
+@auth.login_required
 def getfile() -> jsonify:
     from flask import send_file
     parse = MyParse()
@@ -382,6 +380,45 @@ def getfile() -> jsonify:
     fileID = parse.parse_args().get("fileID")
     file = BugFile.get(fileID)
     return send_file(file.filePath)
+
+
+@myBug.route("/delFile", methods=['POST'])
+@auth.login_required
+def delFile() -> jsonify:
+    parse = MyParse()
+    parse.add(name="fileID", required=True, type=int)
+    fileID = parse.parse_args().get("fileID")
+    bug = BugFile.get(fileID)
+    filePath = bug.filePath
+    import os
+    os.remove(filePath)
+    bug.delete()
+    return jsonify(myResponse(SUCCESS, None, OK))
+
+
+@myBug.route("/putFileName", methods=["POST"])
+@auth.login_required
+def putFile() -> jsonify:
+    parse = MyParse()
+    parse.add(name="fileID", required=True, type=int)
+    parse.add(name="fileName", required=True)
+    fileID = parse.parse_args().get("fileID")
+    fileNewName = parse.parse_args().get('fileName')  # 没有后缀
+    file = BugFile.get(fileID)
+    fileOldName = file.fileName
+    fileOldPath = file.filePath
+
+    import os
+    try:
+        fileNewName = fileNewName + "." + fileOldName.split(".")[1]
+        fileNewPath = fileOldPath.replace(fileOldName, fileNewName)
+        file.fileName = fileNewName
+        file.filePath = fileNewPath
+        os.rename(fileOldPath, fileNewPath)
+        return jsonify(myResponse(SUCCESS, file.id, OK))
+    except Exception as e:
+        log.error(e)
+        return jsonify(myResponse(ERROR, None, e))
 
 
 api_script = Api(myBug)

@@ -107,7 +107,7 @@ class User(Base):
             "account": info.account,
             "name": info.name,
             "department": info.department,
-            "ctime":info.create_time
+            "ctime": info.create_time
 
         } for info in cls.all()]
 

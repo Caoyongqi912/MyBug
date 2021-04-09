@@ -77,6 +77,7 @@ class User(Base):
     """
     用户类
     """
+
     __tablename__ = "user"
     account = db.Column(db.String(20), comment="用户名")
     name = db.Column(db.String(20), unique=True, comment="真实姓名")

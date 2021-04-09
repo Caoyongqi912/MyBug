@@ -8,11 +8,8 @@ from flask_restful import Api, Resource
 from flask import jsonify
 from APP.api import myBug
 from COMMENT.ParamParse import MyParse
-from COMMENT.Log import get_log
-from COMMENT.myResponse import myResponse
-from Model.models import Product, Solution, Build, Platform, ErrorType, Project, Module
 from .errors_or_auth import is_admin
-from APP import auth, db
+from APP import auth
 from COMMENT.const import *
 
 log = get_log(__file__)

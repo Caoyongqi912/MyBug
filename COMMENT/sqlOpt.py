@@ -31,14 +31,14 @@ class SqlOpt:
         """
         params = self._verify(params)
         if targets:
-            sql = f"select {', '.join([k for k in targets])} from {self.table} where "
+            sql = f"SELECT {', '.join([k for k in targets])} FROM {self.table} WHERE "
         else:
-            sql = f"select * from {self.table} where "
+            sql = f"SELECT * FROM {self.table} WHERE "
 
         for param in params:
-            s = " ".join([param.get("key"), param.get("condition"), '"' + str(param.get('val')) + '" ' + f"{opt} "])
+            s = " ".join([param.get("key"), param.get("condition"), '"' + str(param.get('val')) + '" ' + f"{opt} ".upper()])
             sql += s
-        sql = sql.strip(f"{opt} ")
+        sql = sql.strip(f"{opt} ".upper())
         return self._doSelect(sql, limit)
 
     def update(self, params: list, targets: list, opt: str = "and")->bool:
@@ -56,12 +56,12 @@ class SqlOpt:
             tar += f"'{i['val']}'"
             tar += ", "
         tar = tar.strip(", ")
-        sql = f"update {self.table} set {tar} where "
+        sql = f"UPDATE {self.table} SET {tar} WHERE "
         if len(params) > 1:
             for param in params:
-                s = " ".join([param.get("key"), param.get("condition"), '"' + str(param.get('val')) + '" ' + f"{opt} "])
+                s = " ".join([param.get("key"), param.get("condition"), '"' + str(param.get('val')) + '" ' + f"{opt} ".upper()])
                 sql += s
-            sql = sql.strip(f"{opt} ")
+            sql = sql.strip(f"{opt} ".upper())
         else:
             param = params[0]
             s = " ".join([param.get("key"), param.get("condition"), '"' + str(param.get('val')) + '"'])
@@ -69,7 +69,7 @@ class SqlOpt:
 
         try:
             self.eng.execute(sql)
-            log.debug(f"sql: {sql}")
+            log.info(f"sql: {sql}")
             return True
         except Exception as e:
             log.error(e)
@@ -91,7 +91,7 @@ class SqlOpt:
     def _doSelect(self, sql, limit) -> list:
         try:
             res = self.eng.execute(sql)
-            log.debug(f"sql: {sql}")
+            log.info(f"sql: {sql}")
             if limit:
                 return res.fetchmany(limit)
             else:

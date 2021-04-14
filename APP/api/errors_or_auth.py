@@ -36,6 +36,8 @@ def unauthorized():
     return jsonify(dict(err="请求没有权限啊,在康康")), 401
 
 
+
+
 @auth.verify_password
 def verify_password_or_token(username_or_token, password):
     user = User.verify_token(token=username_or_token)

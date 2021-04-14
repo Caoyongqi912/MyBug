@@ -5,8 +5,6 @@
 # @File    : ParamParse.py
 
 from flask import request
-from flask_restful import abort
-from COMMENT.myResponse import myResponse
 from COMMENT.const import *
 
 
@@ -93,7 +91,7 @@ class SearchParamsParse:
             if not b.get("key") and not b.get("condition") and not b.get("val"):
                 abort(myResponse(SQL_PARAM_ERROR, None, "invalid params"))
             if b.get("condition") not in self.condition:
-                abort(myResponse(SQL_PARAM_ERROR, None, f"{b.get['condition']}  is  invalid "))
+                abort(myResponse(SQL_PARAM_ERROR, None, f"{b.get('condition')}  is  invalid "))
 
         return body
 

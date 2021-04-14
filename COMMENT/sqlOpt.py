@@ -17,7 +17,8 @@ log = get_log(__file__)
 
 class SqlOpt:
     eng = create_engine(create_app().config['SQLALCHEMY_DATABASE_URI'], echo=False)
-    condition = ["in", "not in", "=", ">", "<"]
+    conditions = ["in", "not in", "=", ">", "<"]
+    opts = ['and', "or"]
 
     def __init__(self, table):
         self.table = table
@@ -37,9 +38,9 @@ class SqlOpt:
 
         for param in params:
             s = " ".join(
-                [param.get("key"), param.get("condition"), '"' + str(param.get('val')) + '" ' + f"{opt} ".upper()])
+                [param.get("key"), param.get("condition"), '"' + str(param.get('val')) + '" ' + f"{param.get('opt')} ".upper()])
             sql += s
-        sql = sql.rstrip(f"{opt} ".upper())
+        sql = sql.rstrip(f"AND ").rstrip("OR ")
         return self._doSelect(sql, limit)
 
     def update(self, params: list, targets: list, opt: str = "and") -> bool:
@@ -138,31 +139,12 @@ class SqlOpt:
             return []
 
     def _verify(self, body: list) -> list:
-        for b in body:
-            if not b.get("key") and not b.get("condition") and not b.get("val"):
+        for param in body:
+            if not param.get("key") and not param.get("condition") and not param.get("val") and not param.get("opt"):
                 abort(myResponse(SQL_PARAM_ERROR, None, "invalid params"))
-
-            if b.get("condition") not in self.condition:
-                abort(myResponse(SQL_PARAM_ERROR, None, f"{b.get['condition']}  is  invalid "))
+            if param.get("condition") not in self.conditions:
+                abort(myResponse(SQL_PARAM_ERROR, None, f"condition: {param.get('condition')}  is  invalid "))
+            if param.get("opt") not in self.opts:
+                abort(myResponse(SQL_PARAM_ERROR, None, f"opt: {param.get('opt')}  is  invalid "))
         return body
 
-
-if __name__ == '__main__':
-    opt = [{'key': 'id', 'condition': '>', 'val': 1},
-           {'key': 'level', 'condition': '=', 'val': 'p2'}]
-    targets = ['title']
-    from Model.models import User
-
-    put_targets = [{"key": "title", "val": "test"}, {"key": "level", "val": "p1"}]
-    put_opt = [{'key': 'id', 'condition': '=', 'val': 1}]
-
-    delPar = [{"key": "id", "val": 1, "condition": "="}]
-    delOpt = "AND"
-
-    # a = SqlOpt("bugs").select(opt, targets)
-    # SqlOpt('bugs').update(put_opt, put_targets)
-    # SqlOpt("bugs").delete(delPar)
-    import time
-
-    insertPar = [{"key": "name", "val": "test"}, {"key": "create_time", "val": time.time()}]
-    SqlOpt("project").insert(insertPar)

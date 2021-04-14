@@ -95,27 +95,33 @@ class MyRequest:
     def search(self):
         json = {
             "opt": 1,
-            "searchID":1
+            "searchID": 1
         }
         rep = self.go(method="POST", url="api/search", body=json, auth=("cyq", "cyq"))
         print(rep.json())
 
     def removeFile(self):
         json = {
-            "fileID":4
+            "fileID": 4
         }
         rep = self.go(method="POST", url="api/delFile", body=json, auth=("cyq", "cyq"))
         print(rep.json())
 
     def putFile(self):
         json = {
-            "fileID":6,
-            "fileName":"xixixiahal"
+            "fileID": 6,
+            "fileName": "xixixiahal"
         }
         rep = self.go(method="POST", url="api/putFileName", body=json, auth=("cyq", "cyq"))
         print(rep.json())
 
+    def groupSearch(self):
+        json = {
+            "group": [{"key": "id", "val": 2, "condition": "=", "opt": "or"},{"key": "id", "val": 3, "condition": "=", "opt": "and"}]
+        }
+        rep = self.go(method="POST", url="api/groupSearch", body=json, auth=("cyq", "cyq"))
+        print(rep.json())
+
 if __name__ == '__main__':
     m = MyRequest()
-    m.upload()
-
+    m.groupSearch()

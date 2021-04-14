@@ -294,8 +294,25 @@ class SearchBug(Resource):
         :confirmed     = !=
         :errorType     = !=
         :createTime    = !=
+
+
         :return:
         """
+
+        requestBody = {
+            "option": "and",
+            "searchBody": [
+                {
+                    "key": "id",
+                    "condition": ">",
+                    "val": 1
+                }, {
+                    "key": "level",
+                    "condition": "=",
+                    "val": "p1"
+                }
+            ]
+        }
 
         parse = MyParse()
         parse.add(name="option", choices=['and', 'or'], required=True)
@@ -421,6 +438,36 @@ def putFile() -> jsonify:
         return jsonify(myResponse(ERROR, None, e))
 
 
+
+
+class GroupSearch(Resource):
+
+    def post(self):
+        from COMMENT.sqlOpt import SqlOpt
+
+        """
+           按组搜索
+           group：[{"key":"","val":"","condition":"<|>|=|in|notIn|!=","opt":"and|or"}]
+           :return:
+           """
+        parse = MyParse()
+        parse.add(name="group", required=True, type=list)
+        bugInfos = [{
+            "bugID": info[0],
+            "createTime": info[1],
+            "title": info[3],
+            "level": info[4],
+            "priority": info[5],
+            "status": info[6],
+            "confirmed": info[7],
+            "creater": info[8],
+            "updater": info[1],
+            "solutionID": info[14]
+        } for info in SqlOpt("bugs").select(parse.parse_args().get("group"))]
+
+        return jsonify(myResponse(0, bugInfos, 'ok'))
+
+
 api_script = Api(myBug)
 api_script.add_resource(MyBugs, "/bugOpt")
 api_script.add_resource(BugLists, "/getBugs")
@@ -429,3 +476,5 @@ api_script.add_resource(Confirmed, "/confirmedBug")
 api_script.add_resource(CloseBug, "/closeBug")
 api_script.add_resource(CopyBug, '/copyBug')
 api_script.add_resource(SearchBug, "/searchBug")
+api_script.add_resource(GroupSearch, "/groupSearch")
+

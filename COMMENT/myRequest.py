@@ -117,7 +117,9 @@ class MyRequest:
 
     def groupSearch(self):
         json = {
-            "group": [{"key": "id", "val": 2, "condition": "=", "opt": "or"},{"key": "id", "val": 3, "condition": "=", "opt": "and"}]
+            "group": [{"key": "id", "val": 2, "condition": "=", "opt": "or"},
+                      {"key": "id", "val": 3, "condition": "=", "opt": "or"},
+                      {"key": "title", "val": "004", "condition": "like", "opt": "or"}]
         }
         rep = self.go(method="POST", url="api/groupSearch", body=json, auth=("cyq", "cyq"))
         print(rep.json())

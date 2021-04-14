@@ -17,13 +17,13 @@ log = get_log(__file__)
 
 class SqlOpt:
     eng = create_engine(create_app().config['SQLALCHEMY_DATABASE_URI'], echo=False)
-    conditions = ["in", "not in", "=", ">", "<"]
+    conditions = ["like", "=", ">", "<"]
     opts = ['and', "or"]
 
     def __init__(self, table):
         self.table = table
 
-    def select(self, params: list, targets: list = None, opt: str = "and", limit=None):
+    def select(self, params: list, targets: list = None, limit=None):
         """
         select title, level from bugs where id > 1 and level = 'p1'
         :targets:[title, level]
@@ -38,7 +38,7 @@ class SqlOpt:
 
         for param in params:
             s = " ".join(
-                [param.get("key"), param.get("condition"), '"' + str(param.get('val')) + '" ' + f"{param.get('opt')} ".upper()])
+                [param.get("key"), param.get("condition").upper(), f' "' + str(param.get('val')) + '" ' + f"{param.get('opt')} ".upper()])
             sql += s
         sql = sql.rstrip(f"AND ").rstrip("OR ")
         return self._doSelect(sql, limit)
@@ -144,7 +144,10 @@ class SqlOpt:
                 abort(myResponse(SQL_PARAM_ERROR, None, "invalid params"))
             if param.get("condition") not in self.conditions:
                 abort(myResponse(SQL_PARAM_ERROR, None, f"condition: {param.get('condition')}  is  invalid "))
+            if param.get("condition") == "like":
+                param['val'] = f"%{param['val']}%"
             if param.get("opt") not in self.opts:
                 abort(myResponse(SQL_PARAM_ERROR, None, f"opt: {param.get('opt')}  is  invalid "))
+
         return body
 

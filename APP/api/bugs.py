@@ -447,7 +447,7 @@ class GroupSearch(Resource):
 
         """
            按组搜索
-           group：[{"key":"","val":"","condition":"<|>|=|in|notIn|!=","opt":"and|or"}]
+           group：[{"key":"","val":"","condition":"<|>|=|like||!=","opt":"and|or"}]
            :return:
            """
         parse = MyParse()

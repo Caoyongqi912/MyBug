@@ -27,7 +27,9 @@ class SqlOpt:
         """
         select title, level from bugs where id > 1 and level = 'p1'
         :targets:[title, level]
-        :params: [{"key":"id",condition:[ ">"|"<"|"=" ],"val":"1"},]
+        :params:     [{"key": "id", "val": 2, "condition": "=", "opt": "or"},
+                      {"key": "id", "val": 3, "condition": "=", "opt": "or"},
+                      {"key": "title", "val": "004", "condition": "like", "opt": "or"}]
         :return:
         """
         params = self._verify(params)

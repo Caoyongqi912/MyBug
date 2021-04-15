@@ -6,7 +6,7 @@
 
 from flask_restful import Api, Resource
 from APP import auth
-from flask import g, jsonify
+from flask import g, jsonify, request
 from COMMENT.const import *
 from Model.models import *
 from APP.api import myBug
@@ -51,10 +51,16 @@ class MyBugs(Resource):
         mailTo = parse.parse_args().get("mailTo")
         stepsBody = parse.parse_args().get("stepsBody")
 
-        project = Project.get(projectId)
-        product = Product.get(productId)
-        User.get(mailTo)
-        User.get(assignedTo)
+        project = Project.get(projectId, "projectId")
+        product = Product.get(productId, "productId")
+
+        if mailTo:
+            User.get(mailTo, "mailTo")
+        if assignedTo:
+            User.get(assignedTo, "assignedTo")
+        # file = request.files.get('file')
+        # if file:
+        #     print(file)
 
         if product not in project.product_records:
             return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
@@ -67,6 +73,7 @@ class MyBugs(Resource):
             u = Bugs(title=title, creater=g.user.id, stepsBody=stepsBody, product=productId, build=buildId)
             u.priority = priority
             u.level = level
+            u.createrName = g.user.name
             u.save()
             return jsonify(myResponse(SUCCESS, u.id, "ok"))
         except ErrorType as e:
@@ -106,8 +113,8 @@ class MyBugs(Resource):
                 return jsonify(myResponse(21, None, f"productId： cat't be null"))
             if not projectId:
                 return jsonify(myResponse(21, None, f"projectId： cat't be null"))
-            project = Project.get(projectId)
-            product = Product.get(productId)
+            project = Project.get(projectId, "projectId")
+            product = Product.get(productId, "productId")
             if product not in project.product_records:
                 return jsonify(myResponse(21, None, f"Project： Not included productId {productId}"))
             if product not in project.product_records:
@@ -119,14 +126,14 @@ class MyBugs(Resource):
                 return jsonify(myResponse(21, None, f"Product： Not included buildId {buildId}"))
 
         if mailTo:
-            User.get(mailTo)
+            User.get(mailTo, "mailTo")
         if assignedTo:
-            User.get(assignedTo)
+            User.get(assignedTo, "assignedTo")
 
-        bug = Bugs.get(bugID)
+        bug = Bugs.get(bugID, "bugID")
         bug.updater = g.user.id
-
-        bug.update(parse.parse_args())
+        bug.updaterName = g.user.name
+        bug.updateBug(parse.parse_args())
 
         return jsonify(myResponse(0, bug.id, "ok"))
 
@@ -136,7 +143,7 @@ class MyBugs(Resource):
         parse = MyParse()
         parse.add(name="bugID", type=int, required=True)
         bugID = parse.parse_args().get("bugID")
-        bug = Bugs.get(bugID)
+        bug = Bugs.get(bugID, "bugID")
         bug.delete()
 
         return jsonify(myResponse(0, None, "ok"))
@@ -146,8 +153,10 @@ class BugLists(Resource):
 
     @auth.login_required
     def get(self):
-        projects = Project.query.all()
-        print(projects)
+        par = MyParse()
+        par.add(name="productID", required=True, location="args")
+        bugInfo = Product.getBugs(par.parse_args().get("productID"), "productID")
+        return jsonify(myResponse(SUCCESS, bugInfo, OK))
 
 
 class MyBug(Resource):
@@ -157,9 +166,9 @@ class MyBug(Resource):
         parse = MyParse()
         parse.add(name="bugID", location="args")
         bugID = parse.parse_args().get("bugID")
-        bug = Bugs.get(bugID)
+        bug = Bugs.get(bugID, "bugID", obj=False)
 
-        return jsonify(myResponse(0, bug.getBug, "ok"))
+        return jsonify(myResponse(0, bug, "ok"))
 
     @auth.login_required
     @is_admin
@@ -171,7 +180,7 @@ class MyBug(Resource):
         parse = MyParse()
         parse.add(name="bugID", type=int, required=True)
 
-        bug = Bugs.get(parse.parse_args().get("bugID"))
+        bug = Bugs.get(parse.parse_args().get("bugID"), "bugID")
         bug.delete()
         return jsonify(myResponse(0, None, "ok"))
 
@@ -194,7 +203,7 @@ class Confirmed(Resource):
 
         bugID = parse.parse_args().get("bugID")
 
-        bug = Bugs.get(bugID)
+        bug = Bugs.get(bugID, "bugID")
         bug.update(parse.parse_args())
 
         return jsonify(myResponse(0, bug.id, "ok"))
@@ -217,8 +226,8 @@ class Assigned(Resource):
         bugID = parse.parse_args().get("bugID")
         assTo = parse.parse_args().get("assignedTo")
         note = parse.parse_args().get("note")
-        User.get(assTo)
-        bug = Bugs.get(bugID)
+        User.get(assTo, "assignedTo")
+        bug = Bugs.get(bugID, "bugID")
 
         bug.update(parse.parse_args())
 
@@ -248,7 +257,7 @@ class CloseBug(Resource):
         bugID = parse.parse_args().get('bugID')
         note = parse.parse_args().get("note")
 
-        bug = Bugs.get(bugID)
+        bug = Bugs.get(bugID, "bugID")
         bug.update(parse.parse_args())
 
         if note:
@@ -271,8 +280,8 @@ class CopyBug(Resource):
 
         parse.add(name="bugID", type=int, required=True)
         bugID = parse.parse_args().get("bugID")
-        bug = Bugs.get(bugID)
-        return jsonify(myResponse(0, bug.getBug, "ok"))
+        bug = Bugs.get(bugID, "bugID", obj=False)
+        return jsonify(myResponse(SUCCESS, bug, OK))
 
 
 class SearchBug(Resource):
@@ -360,10 +369,37 @@ class SearchBug(Resource):
         return jsonify(myResponse(0, infos, 'ok'))
 
 
+class GroupSearch(Resource):
+
+    @auth.login_required
+    def post(self) -> jsonify:
+        from COMMENT.sqlOpt import SqlOpt
+        """
+           按组搜索
+           group：[{"key":"","val":"","condition":"<|>|=|like||!=","opt":"and|or"}]
+           :return:
+       """
+        parse = MyParse()
+        parse.add(name="group", required=True, type=list)
+        bugInfos = [{
+            "bugID": info[0],
+            "createTime": info[1],
+            "title": info[3],
+            "level": info[4],
+            "priority": info[5],
+            "status": info[6],
+            "confirmed": info[7],
+            "creater": info[8],
+            "updater": info[1],
+            "solutionID": info[14]
+        } for info in SqlOpt("bugs").select(parse.parse_args().get("group"))]
+
+        return jsonify(myResponse(0, bugInfos, 'ok'))
+
+
 @myBug.route("/uploadFiled/<path:bugID>", methods=['POST'])
 @auth.login_required
 def uploadFiled(bugID) -> jsonify:
-    from flask import request
     from werkzeug.utils import secure_filename
     from faker import Faker
     f = Faker()
@@ -373,7 +409,7 @@ def uploadFiled(bugID) -> jsonify:
         return jsonify(myResponse(ERROR, None, cantEmpty("bugID")))
     if not file:
         return jsonify(myResponse(ERROR, None, NO_FIlE))
-    Bugs.get(bugID)
+    Bugs.get(bugID, "bugID")
     fileName = secure_filename(file.filename)
     filePath = getFilePath(f.pystr() + '_' + fileName)
 
@@ -395,7 +431,7 @@ def getfile() -> jsonify:
     parse = MyParse()
     parse.add(name="fileID", required=True, location="args")
     fileID = parse.parse_args().get("fileID")
-    file = BugFile.get(fileID)
+    file = BugFile.get(fileID, "fileID")
     return send_file(file.filePath)
 
 
@@ -405,7 +441,7 @@ def delFile() -> jsonify:
     parse = MyParse()
     parse.add(name="fileID", required=True, type=int)
     fileID = parse.parse_args().get("fileID")
-    bug = BugFile.get(fileID)
+    bug = BugFile.get(fileID, "fileID")
     filePath = bug.filePath
     import os
     os.remove(filePath)
@@ -421,7 +457,7 @@ def putFile() -> jsonify:
     parse.add(name="fileName", required=True)
     fileID = parse.parse_args().get("fileID")
     fileNewName = parse.parse_args().get('fileName')  # 没有后缀
-    file = BugFile.get(fileID)
+    file = BugFile.get(fileID, "fileID")
     fileOldName = file.fileName
     fileOldPath = file.filePath
 
@@ -438,36 +474,6 @@ def putFile() -> jsonify:
         return jsonify(myResponse(ERROR, None, e))
 
 
-
-
-class GroupSearch(Resource):
-
-    def post(self):
-        from COMMENT.sqlOpt import SqlOpt
-
-        """
-           按组搜索
-           group：[{"key":"","val":"","condition":"<|>|=|like||!=","opt":"and|or"}]
-           :return:
-           """
-        parse = MyParse()
-        parse.add(name="group", required=True, type=list)
-        bugInfos = [{
-            "bugID": info[0],
-            "createTime": info[1],
-            "title": info[3],
-            "level": info[4],
-            "priority": info[5],
-            "status": info[6],
-            "confirmed": info[7],
-            "creater": info[8],
-            "updater": info[1],
-            "solutionID": info[14]
-        } for info in SqlOpt("bugs").select(parse.parse_args().get("group"))]
-
-        return jsonify(myResponse(0, bugInfos, 'ok'))
-
-
 api_script = Api(myBug)
 api_script.add_resource(MyBugs, "/bugOpt")
 api_script.add_resource(BugLists, "/getBugs")
@@ -477,4 +483,3 @@ api_script.add_resource(CloseBug, "/closeBug")
 api_script.add_resource(CopyBug, '/copyBug')
 api_script.add_resource(SearchBug, "/searchBug")
 api_script.add_resource(GroupSearch, "/groupSearch")
-

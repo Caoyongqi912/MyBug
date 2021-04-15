@@ -36,8 +36,7 @@ class ProductOpt(Resource):
         errorTypes = parse.parse_args().get("errorTypes")
         projectId = parse.parse_args().get(("projectId"))
         modules = parse.parse_args().get("module")
-
-        Project.get(projectId)
+        Project.get(projectId, 'projectId')
         Product.verify_name(name)
         pro = Product(name, projectId)
         pro.save()
@@ -53,7 +52,7 @@ class ProductOpt(Resource):
             if builds:
                 for b in builds:
                     Build.verify_name(b)
-                    Build(name=b, productId=pro.id).save()
+                    Build(name=b, productId=pro.id, builder=g.user.name).save()
             if errorTypes:
                 for e in errorTypes:
                     ErrorType.verify_name(e)
@@ -81,7 +80,7 @@ class ProductOpt(Resource):
                 ps = Product.query.get(pid)
                 if not ps:
                     return jsonify(myResponse(ERROR, None, f"{pid}  错误或不存在"))
-                ps = [Product.get(pid)]
+                ps = [Product.get(pid, "productId")]
             else:
                 ps = Product.all()
             productInfo = [
@@ -110,7 +109,7 @@ class ProductOpt(Resource):
         name = parse.parse_args().get("productName")
         Id = parse.parse_args().get('productId')
 
-        pro = Product.get(Id)
+        pro = Product.get(Id, 'productId')
         Product.verify_name(name)
         if not pro:
             return jsonify(myResponse(ERROR, None, f"{Id}  错误或不存在"))
@@ -131,7 +130,7 @@ class ProductOpt(Resource):
         parse = MyParse()
         parse.add(name="productId", required=True)
         ID = parse.parse_args().get("productId")
-        p = Product.get(ID)
+        p = Product.get(ID, 'productId')
         try:
             p.delete()
             return jsonify(myResponse(SUCCESS, None, OK))
@@ -146,7 +145,7 @@ class SolutionOpt(Resource):
         parse = MyParse()
         parse.add(name="productId", required=True, location='args')
         pid = parse.parse_args().get("productId")
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
 
         try:
             s = [{"id": i.id, "name": i.name} for i in p.solutions_records]
@@ -167,8 +166,8 @@ class SolutionOpt(Resource):
         sid = parse.args.get("solutionId")
         name = parse.args.get("name")
 
-        p = Product.get(pid)
-        s = Solution.get(sid)
+        p = Product.get(pid, "productId")
+        s = Solution.get(sid, "solutionId")
 
         if s not in p.solutions_records:
             return jsonify(myResponse(Error_Relation, None, f"Product:{pid}  Not included {sid}"))
@@ -192,7 +191,7 @@ class SolutionOpt(Resource):
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
 
-        p = Product.get(pid)
+        p = Product.get(pid, "productId")
 
         # 验证同一 product name唯一
         if name in [i.name for i in p.solutions_records]:
@@ -210,10 +209,10 @@ class SolutionOpt(Resource):
     @is_admin
     def delete(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="id")
-        id = parse.parse_args().get("id")
+        parse.add(name="solutionId")
+        id = parse.parse_args().get("solutionId")
 
-        s = Solution.get(id)
+        s = Solution.get(id, "solutionId")
         try:
             s.delete()
             return jsonify(myResponse(SUCCESS, None, OK))
@@ -229,7 +228,7 @@ class PlatformOpt(Resource):
         parse = MyParse()
         parse.add(name="productId", location='args', required=True)
         pid = parse.args.get("productId")
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
         try:
             s = [{"platform_name": i.name, "id": i.id} for i in p.platforms_records]
             return jsonify(myResponse(SUCCESS, s, OK))
@@ -247,8 +246,8 @@ class PlatformOpt(Resource):
         pid = parse.parse_args().get("productId")
         pld = parse.parse_args().get("platformId")
         name = parse.parse_args().get("name")
-        p = Product.get(pid)
-        pl = Platform.get(pld)
+        p = Product.get(pid, 'productId')
+        pl = Platform.get(pld, 'platformId')
         if pl not in p.platforms_records:
             return jsonify(myResponse(Error_Relation, None, f"Product:{pid}  Not included {pld}"))
         # 验证同一 product name唯一
@@ -268,7 +267,7 @@ class PlatformOpt(Resource):
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
 
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
         # 验证同一 product name唯一
         if name in [i.name for i in p.platforms_records]:
             return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
@@ -284,9 +283,9 @@ class PlatformOpt(Resource):
     @is_admin
     def delete(self):
         parse = MyParse()
-        parse.add(name="id", required=True)
-        id = parse.parse_args().get("id")
-        p = Platform.get(id)
+        parse.add(name="platformId", required=True)
+        id = parse.parse_args().get("platformId")
+        p = Platform.get(id, 'platformId')
         try:
             p.delete()
             return jsonify(myResponse(SUCCESS, None, OK))
@@ -302,7 +301,7 @@ class BuildOpt(Resource):
         parse = MyParse()
         parse.add(name="productId", location="args", required=True)
         pid = parse.parse_args().get("productId")
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
         try:
             b = [{"build_name": i.name, "id": i.id} for i in p.builds_records]
             return jsonify(myResponse(SUCCESS, b, OK))
@@ -320,8 +319,8 @@ class BuildOpt(Resource):
         pid = parse.parse_args().get("productId")
         bid = parse.parse_args().get("buildId")
         name = parse.parse_args().get("name")
-        p = Product.get(pid)
-        b = Build.get(bid)
+        p = Product.get(pid, 'productId')
+        b = Build.get(bid, "buildId")
         if b not in p.builds_records:
             return jsonify(myResponse(Error_Relation, None, f"Product:{pid}  Not included {bid}"))
             # 验证同一 product name唯一
@@ -337,11 +336,11 @@ class BuildOpt(Resource):
         parse = MyParse()
         parse.add(name="productId", type=int, required=True)
         parse.add(name="name", required=True)
-        parse.add(name="desc",type=str)
+        parse.add(name="desc", type=str)
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
         desc = parse.parse_args().get("desc")
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
         # 验证同一 product name唯一
         if name in [i.name for i in p.builds_records]:
             return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
@@ -357,9 +356,9 @@ class BuildOpt(Resource):
     @is_admin
     def delete(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="id", type=int, required=True)
-        id = parse.parse_args().get("id")
-        b = Build.get(id)
+        parse.add(name="buildId", type=int, required=True)
+        id = parse.parse_args().get("buildId")
+        b = Build.get(id, 'buildId')
         try:
             b.delete()
             return jsonify(myResponse(SUCCESS, None, OK))
@@ -375,7 +374,7 @@ class ErrorTypeOpt(Resource):
         parse = MyParse()
         parse.add(name="productId", location='args', required=True)
         pid = parse.parse_args().get("productId")
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
         try:
             e = [i.name for i in p.errorTypes_records]
             return jsonify(myResponse(SUCCESS, e, OK))
@@ -393,8 +392,8 @@ class ErrorTypeOpt(Resource):
         pid = parse.parse_args().get("productId")
         eid = parse.parse_args().get("errorId")
         name = parse.parse_args().get("name")
-        p = Product.get(pid)
-        e = ErrorType.get(eid)
+        p = Product.get(pid, 'productId')
+        e = ErrorType.get(eid, 'errorId')
         if e not in p.errorTypes_records:
             return jsonify(myResponse(21, None, f"Product:{pid}  Not included {eid}"))
         if name in [i.name for i in p.builds_records]:
@@ -411,7 +410,7 @@ class ErrorTypeOpt(Resource):
         parse.add(name="name")
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
 
         if name in [i.name for i in p.errorTypes_records]:
             return jsonify(myResponse(31, None, f"name:{name} already exists "))
@@ -427,9 +426,9 @@ class ErrorTypeOpt(Resource):
     @is_admin
     def delete(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="id", type=int, required=True)
-        id = parse.parse_args().get("id")
-        e = ErrorType.get(id)
+        parse.add(name="errorId", type=int, required=True)
+        id = parse.parse_args().get("errorId")
+        e = ErrorType.get(id, 'errorId')
         try:
             e.delete()
             return jsonify(myResponse(SUCCESS, None, OK))
@@ -445,7 +444,7 @@ class ModuleOpt(Resource):
         parse = MyParse()
         parse.add(name="productId", location='args', required=True)
         pid = parse.parse_args().get("productId")
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
         try:
             e = [i.name for i in p.modules_records]
             return jsonify(myResponse(SUCCESS, e, OK))
@@ -461,7 +460,7 @@ class ModuleOpt(Resource):
         parse.add(name="name", required=True)
         pid = parse.parse_args().get("productId")
         name = parse.parse_args().get("name")
-        p = Product.get(pid)
+        p = Product.get(pid, 'productId')
 
         if name in [i.name for i in p.modules_records]:
             return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
@@ -477,9 +476,9 @@ class ModuleOpt(Resource):
     @is_admin
     def delete(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="id", type=int, required=True)
+        parse.add(name="moduleId", type=int, required=True)
 
-        e = Module.get(parse.parse_args().get("id"))
+        e = Module.get(parse.parse_args().get("moduleId"), 'moduleId')
         try:
             e.delete()
             return jsonify(myResponse(SUCCESS, None, OK))
@@ -497,8 +496,8 @@ class ModuleOpt(Resource):
         pid = parse.parse_args().get("productId")
         mid = parse.parse_args().get("moduleId")
         name = parse.parse_args().get("name")
-        p = Product.get(pid)
-        e = Module.get(mid)
+        p = Product.get(pid, 'productId')
+        e = Module.get(mid, 'moduleId')
         if e not in p.modules_records:
             return jsonify(myResponse(Error_Relation, None, f"Product:{pid}  Not included {mid}"))
         if name in [i.name for i in p.modules_records]:
@@ -514,7 +513,7 @@ class ProjectOpt(Resource):
     def get(self) -> jsonify:
         parse = MyParse()
         parse.add(name='projectId', required=True)
-        p = Project.get(parse.parse_args().get("projectId"))
+        p = Project.get(parse.parse_args().get("projectId"), 'projectId')
         try:
             e = [i.name for i in p.product]
             return jsonify(myResponse(SUCCESS, e, OK))
@@ -541,10 +540,10 @@ class ProjectOpt(Resource):
     @is_admin
     def delete(self) -> jsonify:
         parse = MyParse()
-        parse.add(name="id", type=int, required=True)
-        id = parse.parse_args().get("id")
+        parse.add(name="projectId", type=int, required=True)
+        id = parse.parse_args().get("projectId")
         try:
-            Project.get(id).delete()
+            Project.get(id, 'projectId').delete()
             return jsonify(myResponse(SUCCESS, None, OK))
         except Exception as e:
             log.error(e)

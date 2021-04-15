@@ -36,6 +36,9 @@ class MyParse:
         参数校验
         :return:
         """
+        if self.body is None:
+            abort(myResponse(ERROR, None, "request body cant be empty"))
+
         for kw in self.args:
             if kw['required'] is True:
                 if not self.body.get(kw['name']) or self.body.get(kw['name']) == "":
@@ -62,7 +65,6 @@ class MyParse:
                     self.body[kw['name']] = kw.get('default')
 
         return self.body
-
 
 
 class Constant:

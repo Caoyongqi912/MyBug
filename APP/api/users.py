@@ -7,12 +7,9 @@
 
 from flask import jsonify, g
 from flask_restful import Resource, Api
-from APP import auth, db
+from APP import auth
 from .errors_or_auth import is_admin
 from APP.api import myBug
-from COMMENT.myResponse import myResponse
-from Model.models import User, Department
-from COMMENT.Log import get_log
 from COMMENT.myBlinker import login_signal
 from COMMENT.ParamParse import MyParse
 from COMMENT.const import *
@@ -75,7 +72,7 @@ class Register(Resource):
 
         if departmentId:
             # departmentId验证
-            Department.get(departmentId)
+            Department.get(departmentId, 'departmentId')
 
         # name 验证
         User.verify_name(name)
@@ -116,11 +113,11 @@ class DepartmentOpt(Resource):
         :return: jsonify
         """
         parse = MyParse()
-        parse.add(name="id", required=True)
+        parse.add(name="departmentId", required=True)
         parse.add(name="name", required=True)
-        did = parse.parse_args().get("id")
+        did = parse.parse_args().get("departmentId")
         name = parse.parse_args().get("name")
-        d = Department.get(did)
+        d = Department.get(did, 'departmentId')
         try:
             d.name = name
             d.save()
@@ -140,7 +137,7 @@ class DepartmentOpt(Resource):
         parse = MyParse()
         parse.add(name="id", required=True)
 
-        d = Department.get(parse.parse_args().get("id"))
+        d = Department.get(parse.parse_args().get("id"), 'departmentId')
         try:
             d.delete()
             return jsonify(myResponse(SUCCESS, None, OK))

@@ -59,18 +59,20 @@ class MyRequest:
 
     def add_bug(self):
         body = {
-            "projectId": 11,
-            "productId": 9,
+            "projectId": 1,
+            "productId": 1,
             "platformId": random.randint(11, 15),
             "buildId": random.randint(11, 20),
             "title": f.sentence(),
             'assignedTo': random.randint(1, 11),
             "mailTo": random.randint(1, 11),
             "stepsBody": f.text(),
-            "level": "Ok",
+            "level": "p1",
             "priority": random.choice(['p1', 'p2', 'p3', 'p4']),
 
         }
+        # testpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/test.txt"
+        # file = {"file": open(testpath, "rb")}
         rep = self.go(method="POST", url="api/bugOpt", body=body, auth=('cyq', 'cyq'))
         print(rep.json())
 
@@ -124,6 +126,22 @@ class MyRequest:
         rep = self.go(method="POST", url="api/groupSearch", body=json, auth=("cyq", "cyq"))
         print(rep.json())
 
+    def buglist(self):
+        param = {"productID": 1}
+        rep = self.go(method="GET", url="api/getBugs", params=param, auth=("cyq", "cyq"))
+        print(rep.json())
+
+    def getbug(self):
+        param = {"bugID": 2}
+        rep = self.go(method="GET", url="api/getBug", params=param, auth=("cyq", "cyq"))
+        print(rep.json())
+
+    def copyBug(self):
+        param = {"bugID": 2}
+        rep = self.go(method="POST", url="api/copyBug", body=param, auth=("cyq", "cyq"))
+        print(rep.json())
+
+
 if __name__ == '__main__':
     m = MyRequest()
-    m.groupSearch()
+    m.copyBug()

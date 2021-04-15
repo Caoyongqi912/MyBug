@@ -33,8 +33,8 @@ class Base(db.Model):
         return cls.query.filter_by().order_by(desc(cls.id)).all()
 
     @classmethod
-    def get(cls, id):
-        return cls.query.get_or_NoFound(id, cls.__name__)
+    def get(cls, id, parseName):
+        return cls.query.get_or_NoFound(id, parseName)
 
     def save(self):
         try:
@@ -113,16 +113,19 @@ class User(Base):
         } for info in cls.all()]
 
     @classmethod
-    def get(cls, id):
-        user = super(User, cls).get(id)
-        info = {
-            "uid": user.id,
-            "account": user.account,
-            "name": user.name,
-            "department": user.department,
-            "ctime": user.create_time
-        }
-        return info
+    def get(cls, id, parseName, obj=True):
+        user = super(User, cls).get(id, parseName)
+        if obj:
+            return user
+        else:
+            info = {
+                "uid": user.id,
+                "account": user.account,
+                "name": user.name,
+                "department": user.department,
+                "ctime": user.create_time
+            }
+            return info
 
     @property
     def getName(self):
@@ -179,12 +182,15 @@ class Project(Base):
         self.name = name
 
     @classmethod
-    def get(cls, id):
-        pro = super(Project, cls).get(id)
-        info = {
-            "name": pro.name,
-        }
-        return info
+    def get(cls, id, parseName, obj=True):
+        pro = super(Project, cls).get(id, parseName)
+        if obj:
+            return pro
+        else:
+            info = {
+                "name": pro.name,
+            }
+            return info
 
     @property
     def product_records(self):
@@ -220,11 +226,26 @@ class Product(Base):
         self.name = name
 
     @classmethod
-    def get(cls, id):
-        pro = super(Product, cls).get(id)
+    def get(cls, id, parseName, obj=True):
+        pro = super(Product, cls).get(id, parseName)
+        if obj:
+            return pro
+        else:
+            info = {
+                "name": pro.name,
+                "ctime": pro.create_time
+            }
+
+            return info
+
+    @classmethod
+    def getBugs(cls, id,name):
+        pro = super(Product, cls).get(id,name)
+
         info = {
             "name": pro.name,
-            "ctime": pro.create_time
+            "ctime": pro.create_time,
+            "bugs": pro.bugs_records
 
         }
         return info
@@ -235,7 +256,20 @@ class Product(Base):
 
     @property
     def bugs_records(self):
-        return self.bugs.filter_by().all()
+        bugInfo = [{
+            "bugID": bug.id,
+            "createTime": bug.create_time,
+            "title": bug.title,
+            "level": bug.level,
+            "priority": bug.priority,
+            "status": bug.status,
+            "confirmed": bug.confirmed,
+            "creater": bug.creater,
+            "updater": bug.updater,
+            "assignedTo": bug.assignedTo,
+            "resolvedBy": bug.resolvedBy,
+        } for bug in self.bugs.all()]
+        return bugInfo
 
     @property
     def solutions_records(self):
@@ -300,23 +334,26 @@ class Build(Base):
     builder = db.Column(db.String(20), comment="构建者")
     desc = db.Column(db.String(50), comment="描述")
 
-    def __init__(self, name, productId, builder, desc):
+    def __init__(self, name, productId, builder, desc=None):
         self.name = name
         self.product = productId
         self.builder = builder
         self.desc = desc
 
     @classmethod
-    def get(cls, id):
-        build = super(Build, cls).get(id)
-        info = {
-            "name": build.name,
-            "builder": build.builder,
-            "desc": build.desc,
-            "ctime": build.create_time
+    def get(cls, id,name,obj=True):
+        build = super(Build, cls).get(id,name)
+        if obj:
+            return build
+        else:
+            info = {
+                "name": build.name,
+                "builder": build.builder,
+                "desc": build.desc,
+                "ctime": build.create_time
 
-        }
-        return info
+            }
+            return info
 
     def __repr__(self):
         return f"build: {self.name}"
@@ -377,8 +414,11 @@ class Bugs(Base):
     status = db.Column(db.Enum("ACTIVE", "RESOLVED", "CLOSED"), server_default="ACTIVE", comment="BUG状态")
     confirmed = db.Column(db.Boolean, default=False, comment="是否确认")
 
-    creater = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, comment="创建者")
+    creater = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, comment="创建者ID")
+    createrName = db.Column(db.String(32), comment="创建者姓名")
     updater = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="修改者")
+    updaterName = db.Column(db.String(32), nullable=True, comment="修改者姓名")
+
     assignedTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="指派给")
     resolvedBy = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="解决者")
     mailTo = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True, comment="抄送给")
@@ -405,59 +445,38 @@ class Bugs(Base):
         return f"bug: {self.title}"
 
     @classmethod
-    def get(cls, id):
-        bug = super(Bugs, cls).get(id)
-        bugInfo = {
-            "bugID": bug.id,
-            "createTime": bug.create_time,
-            "title": bug.title,
-            "level": bug.level,
-            "priority": bug.priority,
-            "status": bug.status,
-            "confirmed": bug.confirmed,
-            "creater": bug.creater,
-            "updater": bug.updater,
-            "assignedTo": bug.assignedTo,
-            "resolvedBy": bug.resolvedBy,
-            "mailTo": bug.mailTo,
-            "stepsBody": bug.stepsBody,
-            "solutionID": bug.solution,
-            "platformID": bug.platform,
-            "productID": bug.product,
-            "buildID": bug.build,
-            "errorTypeID": bug.errorType,
-            "module": bug.module,
-            "bugFiles": bug.myFiles()
+    def get(cls, id, parse, obj=True):
+        bug = super(Bugs, cls).get(id, parse)
+        if obj:
+            return bug
+        else:
+            bugInfo = {
+                "bugID": bug.id,
+                "createTime": bug.create_time,
+                "title": bug.title,
+                "level": bug.level,
+                "priority": bug.priority,
+                "status": bug.status,
+                "confirmed": bug.confirmed,
+                "creater": bug.creater,
+                "updater": bug.updater,
+                "creatername": bug.createrName,
+                "updaterName": bug.updaterName,
+                "assignedTo": bug.assignedTo,
+                "resolvedBy": bug.resolvedBy,
+                "mailTo": bug.mailTo,
+                "stepsBody": bug.stepsBody,
+                "solutionID": bug.solution,
+                "platformID": bug.platform,
+                "productID": bug.product,
+                "buildID": bug.build,
+                "errorTypeID": bug.errorType,
+                "module": bug.module,
+                "bugFiles": bug.myFiles()
 
-        }
-        return bugInfo
+            }
+            return bugInfo
 
-    @property
-    def getBug(self) -> dict:
-        bugInfo = {
-            "bugID": self.id,
-            "createTime": self.create_time,
-            "title": self.title,
-            "level": self.level,
-            "priority": self.priority,
-            "status": self.status,
-            "confirmed": self.confirmed,
-            "creater": self.creater,
-            "updater": self.updater,
-            "assignedTo": self.assignedTo,
-            "resolvedBy": self.resolvedBy,
-            "mailTo": self.mailTo,
-            "stepsBody": self.stepsBody,
-            "solutionID": self.solution,
-            "platformID": self.platform,
-            "productID": self.product,
-            "buildID": self.build,
-            "errorTypeID": self.errorType,
-            "module": self.module,
-            "bugFiles": self.myFiles()
-
-        }
-        return bugInfo
 
     def myFiles(self):
         """
@@ -465,7 +484,7 @@ class Bugs(Base):
         """
         return [{"id": f.id, "fileName": f.fileName, "filePath": f.filePath} for f in self.bugFile.filter_by().all()]
 
-    def update(self, updateBody: dict):
+    def updateBug(self, updateBody: dict):
         """数据更新"""
         try:
             if updateBody.get("module"):

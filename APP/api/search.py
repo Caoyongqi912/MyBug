@@ -9,9 +9,7 @@ from flask_restful import Api, Resource
 from APP import auth
 from APP.api import myBug
 from flask import jsonify
-from Model.models import *
 from COMMENT.const import *
-
 from COMMENT.ParamParse import MyParse
 
 

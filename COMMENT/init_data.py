@@ -17,7 +17,7 @@ def add_user(nums: int):
     create_app().app_context().push()
 
     for i in range(nums):
-        User(account=f.name(), name=f.name(), password=f.password(), admin=False, department=random.randint(1, 10),
+        User(account=f.cname(), name=f.name(), password=f.password(), admin=False, department=random.randint(1, 10),
              gender=random.choice([1, 0])).save()
 
     print("ok")
@@ -87,4 +87,4 @@ def add_module():
         Module(name=i,productId=9).save()
 
 if __name__ == '__main__':
-    add_module( )
+    add_user(100)

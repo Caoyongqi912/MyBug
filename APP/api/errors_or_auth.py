@@ -5,16 +5,27 @@
 # @File    : errors_or_auth.py
 
 from functools import wraps
-from flask import g, jsonify, make_response
+from flask import g, jsonify, make_response,request
 from Model.models import User
 from . import myBug
 from .. import auth
+from COMMENT.Log import get_log
 
+log = get_log(__name__)
 
 @myBug.after_request
 def after_request(response):
     return response
 
+@myBug.before_request
+def logWrite():
+    print(request.url)
+    print(request.args)
+    print(request.host)
+    print(request.remote_addr)
+    print(request.json)
+    print(request.method)
+    print(request.headers)
 
 @myBug.app_errorhandler(404)
 def page_not_found(e):
@@ -67,3 +78,13 @@ def is_admin(func):
 
 
 
+
+
+def logRequest(func):
+    @wraps(func)
+    def getReq(*args,**kwargs):
+        print(request.path)
+        print(request.json)
+        print(request.url)
+        return getReq(*args,**kwargs)
+    return logRequest

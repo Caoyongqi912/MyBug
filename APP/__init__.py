@@ -25,6 +25,7 @@ def create_app(config_name="default"):
     """
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    app.config["BABEL_DEFAULT_LOCALE"] ="zh"
     db.init_app(app)
     catch.init_app(app)
     # 设置跨域
@@ -34,3 +35,5 @@ def create_app(config_name="default"):
     app.register_blueprint(myBug)
 
     return app
+
+

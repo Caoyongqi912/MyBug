@@ -12,7 +12,6 @@ from sqlalchemy import desc
 from APP import db
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
-from hashlib import md5
 
 log = get_log(__file__)
 
@@ -239,8 +238,8 @@ class Product(Base):
             return info
 
     @classmethod
-    def getBugs(cls, id,name):
-        pro = super(Product, cls).get(id,name)
+    def getBugs(cls, id, name):
+        pro = super(Product, cls).get(id, name)
 
         info = {
             "name": pro.name,
@@ -341,8 +340,8 @@ class Build(Base):
         self.desc = desc
 
     @classmethod
-    def get(cls, id,name,obj=True):
-        build = super(Build, cls).get(id,name)
+    def get(cls, id, name, obj=True):
+        build = super(Build, cls).get(id, name)
         if obj:
             return build
         else:
@@ -476,7 +475,6 @@ class Bugs(Base):
 
             }
             return bugInfo
-
 
     def myFiles(self):
         """

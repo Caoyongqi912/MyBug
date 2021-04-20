@@ -61,18 +61,18 @@ class MyRequest:
         body = {
             "projectId": 1,
             "productId": 1,
-            "platformId": random.randint(11, 15),
-            "buildId": random.randint(11, 20),
+            "platformId": 1,
+            "buildId": 1,
             "title": f.sentence(),
-            'assignedTo': random.randint(1, 11),
-            "mailTo": random.randint(1, 11),
+            'assignedTo': 1,
+            "mailTo": 1,
             "stepsBody": f.text(),
             "level": "p1",
             "priority": random.choice(['p1', 'p2', 'p3', 'p4']),
 
         }
-        # testpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/test.txt"
-        # file = {"file": open(testpath, "rb")}
+        testpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/test.txt"
+        file = {"file": open(testpath, "rb")}
         rep = self.go(method="POST", url="api/bugOpt", body=body, auth=('cyq', 'cyq'))
         print(rep.json())
 
@@ -89,10 +89,10 @@ class MyRequest:
         print(rep.json())
 
     def upload(self):
-        testpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/test.txt"
+        testpath = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/test.png"
         file = {"file": open(testpath, "rb")}
-        rep = self.go(method="POST", url="api/uploadFiled/1", files=file, auth=('cyq', 'cyq'))
-        print(rep.json())
+        rep = self.go(method="POST", url="api/uploadFiled/2", files=file, auth=('cyq', 'cyq'))
+        print(rep.text)
 
     def search(self):
         json = {
@@ -111,11 +111,11 @@ class MyRequest:
 
     def putFile(self):
         json = {
-            "fileID": 6,
+            "fileID": 1,
             "fileName": "xixixiahal"
         }
         rep = self.go(method="POST", url="api/putFileName", body=json, auth=("cyq", "cyq"))
-        print(rep.json())
+        print(rep.text)
 
     def groupSearch(self):
         json = {
@@ -141,7 +141,12 @@ class MyRequest:
         rep = self.go(method="POST", url="api/copyBug", body=param, auth=("cyq", "cyq"))
         print(rep.json())
 
+    def getFile(self):
+        param = {"fileID":1}
+        rep = self.go(method="GET", url="api/getFile", params=param, auth=("cyq", "cyq"))
+        print(rep)
 
 if __name__ == '__main__':
     m = MyRequest()
-    m.copyBug()
+
+    m.getFile()

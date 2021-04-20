@@ -4,14 +4,16 @@
 # @Author  : cyq
 # @File    : bugs.py
 
-from flask_restful import Api, Resource
-from APP import auth
+from flask_restful import Api, Resource, marshal_with
+from sqlalchemy.orm import session
+
+from APP import auth, create_app
 from flask import g, jsonify, request
 from COMMENT.const import *
 from Model.models import *
 from APP.api import myBug
 from bugFiles.savefile import getFilePath
-from .errors_or_auth import is_admin
+from .errors_or_auth import is_admin, logRequest
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
 from COMMENT.ParamParse import MyParse, SearchParamsParse
@@ -20,6 +22,8 @@ log = get_log(__file__)
 
 
 class MyBugs(Resource):
+
+
 
     @auth.login_required
     def post(self) -> jsonify:
@@ -58,9 +62,6 @@ class MyBugs(Resource):
             User.get(mailTo, "mailTo")
         if assignedTo:
             User.get(assignedTo, "assignedTo")
-        # file = request.files.get('file')
-        # if file:
-        #     print(file)
 
         if product not in project.product_records:
             return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
@@ -110,20 +111,20 @@ class MyBugs(Resource):
         if projectId or productId:
 
             if not productId:
-                return jsonify(myResponse(21, None, f"productId： cat't be null"))
+                return jsonify(myResponse(ERROR, None, cantEmpty("productId")))
             if not projectId:
-                return jsonify(myResponse(21, None, f"projectId： cat't be null"))
+                return jsonify(myResponse(ERROR, None, cantEmpty("projectId")))
             project = Project.get(projectId, "projectId")
             product = Product.get(productId, "productId")
             if product not in project.product_records:
-                return jsonify(myResponse(21, None, f"Project： Not included productId {productId}"))
+                return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
             if product not in project.product_records:
-                return jsonify(myResponse(21, None, f"Project： Not included productId {productId}"))
+                return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
             if platformId not in [i.id for i in product.platforms_records]:
-                return jsonify(myResponse(21, None, f"Product： Not included platformId {platformId}"))
+                return jsonify(myResponse(Error_Relation, None, f"Product： Not included platformId {platformId}"))
 
             if buildId not in [i.id for i in product.builds_records]:
-                return jsonify(myResponse(21, None, f"Product： Not included buildId {buildId}"))
+                return jsonify(myResponse(Error_Relation, None, f"Product： Not included buildId {buildId}"))
 
         if mailTo:
             User.get(mailTo, "mailTo")
@@ -135,7 +136,7 @@ class MyBugs(Resource):
         bug.updaterName = g.user.name
         bug.updateBug(parse.parse_args())
 
-        return jsonify(myResponse(0, bug.id, "ok"))
+        return jsonify(myResponse(SUCCESS, bug.id, OK))
 
     @auth.login_required
     @is_admin
@@ -397,31 +398,33 @@ class GroupSearch(Resource):
         return jsonify(myResponse(0, bugInfos, 'ok'))
 
 
-@myBug.route("/uploadFiled/<path:bugID>", methods=['POST'])
-@auth.login_required
-def uploadFiled(bugID) -> jsonify:
-    from werkzeug.utils import secure_filename
-    from faker import Faker
-    f = Faker()
+class Files(Resource):
 
-    file = request.files.get('file')
-    if not bugID:
-        return jsonify(myResponse(ERROR, None, cantEmpty("bugID")))
-    if not file:
-        return jsonify(myResponse(ERROR, None, NO_FIlE))
-    Bugs.get(bugID, "bugID")
-    fileName = secure_filename(file.filename)
-    filePath = getFilePath(f.pystr() + '_' + fileName)
+    @auth.login_required
+    def post(self, bugID):
+        from werkzeug.utils import secure_filename
+        from faker import Faker
+        f = Faker()
+        file = request.files.get('file')
 
-    bf = BugFile(fileName=fileName, filePath=filePath, bugID=bugID)
+        if not file:
+            return jsonify(myResponse(ERROR, None, NO_FIlE))
+        if not bugID:
+            return jsonify(myResponse(ERROR, None, cantEmpty("bugID")))
+        Bugs.get(bugID, 'bugID')
 
-    try:
-        file.save(filePath)
-        bf.save()
-        return jsonify(myResponse(SUCCESS, bf.id, OK))
-    except Exception as e:
-        log.error(e)
-        return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+        fileName = secure_filename(file.filename)
+        filePath = getFilePath(f.pystr() + '_' + fileName)
+
+        bf = BugFile(fileName=fileName, filePath=filePath, bugID=bugID)
+
+        try:
+            file.save(filePath)
+            bf.save()
+            return jsonify(myResponse(SUCCESS, bf.id, OK))
+        except Exception as e:
+            log.error(e)
+            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
 
 
 @myBug.route("/getFile", methods=["GET"])
@@ -460,7 +463,6 @@ def putFile() -> jsonify:
     file = BugFile.get(fileID, "fileID")
     fileOldName = file.fileName
     fileOldPath = file.filePath
-
     import os
     try:
         fileNewName = fileNewName + "." + fileOldName.split(".")[1]
@@ -483,3 +485,4 @@ api_script.add_resource(CloseBug, "/closeBug")
 api_script.add_resource(CopyBug, '/copyBug')
 api_script.add_resource(SearchBug, "/searchBug")
 api_script.add_resource(GroupSearch, "/groupSearch")
+api_script.add_resource(Files, "/uploadFiled/<path:bugID>")

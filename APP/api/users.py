@@ -29,14 +29,13 @@ class Login(Resource):
             res = user.verify_password(password)
             if res:
                 token = user.generate_auth_token().decode("ascii")
+
                 # 发送信号
                 login_signal.send(username=account)
 
                 return jsonify(myResponse(SUCCESS, token, OK))
             else:
-                log.error(f"<{__class__}>  error password !")
                 return jsonify(myResponse(1, None, "err password"))
-        log.error(f"<{__class__}>  err account !")
         return jsonify(myResponse(ERROR, None, ERROR_ACCOUNT))
 
 
@@ -147,19 +146,24 @@ class DepartmentOpt(Resource):
             return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
 
 
-class GetUsers(Resource):
+class GetUserInfo(Resource):
+
 
     @auth.login_required
-    def get(self):
+    def post(self):
         """
-        获取用户列表
+        获取用户信息
         :return:
         """
-        return jsonify(myResponse(SUCCESS, User.getUsers(), OK))
+        user = g.user.getInfo()
+        return jsonify(myResponse(SUCCESS, user, OK))
+
+
 
 
 api_script = Api(myBug)
 api_script.add_resource(Login, "/login")
 api_script.add_resource(Register, "/register")
 api_script.add_resource(DepartmentOpt, "/departmentOpt")
-api_script.add_resource(GetUsers, '/getUsers')
+# api_script.add_resource(GetUsers, '/getUsers')
+api_script.add_resource(GetUserInfo,"/getUserInfo")

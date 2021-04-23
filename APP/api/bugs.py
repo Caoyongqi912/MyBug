@@ -13,7 +13,7 @@ from COMMENT.const import *
 from Model.models import *
 from APP.api import myBug
 from bugFiles.savefile import getFilePath
-from .errors_or_auth import is_admin, logRequest
+from .errors_or_auth import is_admin
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
 from COMMENT.ParamParse import MyParse, SearchParamsParse

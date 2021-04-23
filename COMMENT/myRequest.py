@@ -100,6 +100,8 @@ class MyRequest:
             "searchID": 1
         }
         rep = self.go(method="POST", url="api/search", body=json, auth=("cyq", "cyq"))
+        print(rep.headers)
+
         print(rep.json())
 
     def removeFile(self):
@@ -146,7 +148,19 @@ class MyRequest:
         rep = self.go(method="GET", url="api/getFile", params=param, auth=("cyq", "cyq"))
         print(rep)
 
+    def login(self):
+        body = {'account':"cyq","password":"cyq"}
+        rep = self.go(method="POST", url="api/login", body=body)
+
+        print(rep.json())
+
+    def getUserInfo(self):
+        rep = self.go(method="POST", url="api/getToken")
+
+
+        print(rep)
 if __name__ == '__main__':
     m = MyRequest()
 
-    m.getFile()
+
+    m.login()

@@ -130,6 +130,9 @@ class User(Base):
     def getName(self):
         return self.name
 
+    def getInfo(self):
+        return {"id": self.id, "name": self.name, "admin": self.admin}
+
     def is_superuser(self) -> bool:
         """是否是管理员"""
         return self.admin

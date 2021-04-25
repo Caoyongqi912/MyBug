@@ -107,7 +107,8 @@ class User(Base):
             "account": info.account,
             "name": info.name,
             "department": info.department,
-            "ctime": info.create_time
+            "ctime": info.create_time,
+            "role": "admin " if info.admin else "editor"
 
         } for info in cls.all()]
 
@@ -122,7 +123,8 @@ class User(Base):
                 "account": user.account,
                 "name": user.name,
                 "department": user.department,
-                "ctime": user.create_time
+                "ctime": user.create_time,
+                "role": "admin " if user.admin else "editor"
             }
             return info
 
@@ -131,7 +133,8 @@ class User(Base):
         return self.name
 
     def getInfo(self):
-        return {"id": self.id, "name": self.name, "admin": self.admin}
+        return {"id": self.id, "name": self.name, "department": self.department,
+                "ctime": self.create_time, "role": "admin" if self.admin else "editor"}
 
     def is_superuser(self) -> bool:
         """是否是管理员"""

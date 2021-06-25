@@ -24,9 +24,9 @@ class MyTestCase(unittest.TestCase):
         # self.assertEqual(resp['msg'], "account 非法参数！")
 
 
-    def test_something(self):
-        self.assertEqual(True, False)
-
-
+    # def test_get_departmeny(self):
+    #     resp = app.test_client().get("/api/departmentOpt",params={"departmentId":1})
+    #     print(resp)
+    #
 if __name__ == '__main__':
     unittest.main()

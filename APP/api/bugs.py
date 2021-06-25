@@ -109,7 +109,6 @@ class MyBugs(Resource):
         buildId = parse.parse_args().get("buildId")
 
         if projectId or productId:
-
             if not productId:
                 return jsonify(myResponse(ERROR, None, cantEmpty("productId")))
             if not projectId:

@@ -21,7 +21,6 @@ def after_request(response):
 
 @myBug.before_request
 def logWrite():
-
     log.info(
         f"[ request url = {request.url} | request Host = {request.host} | request Method = {request.method}")
 

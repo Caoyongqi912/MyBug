@@ -146,9 +146,18 @@ class DepartmentOpt(Resource):
             return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
 
 
+class GetDepartInfo(Resource):
+
+    @auth.login_required
+    def post(self) -> jsonify:
+        par = MyParse()
+        par.add(name="departmentId", required=True, location="args")
+        d = Department.get(par.parse_args().get("departmentId"), 'departmentId')
+        dInfo = {"name": d.name}
+        return jsonify(myResponse(SUCCESS, dInfo, OK))
+
+
 class GetUserInfo(Resource):
-
-
     @auth.login_required
     def post(self):
         """
@@ -159,11 +168,10 @@ class GetUserInfo(Resource):
         return jsonify(myResponse(SUCCESS, user, OK))
 
 
-
-
 api_script = Api(myBug)
 api_script.add_resource(Login, "/login")
 api_script.add_resource(Register, "/register")
 api_script.add_resource(DepartmentOpt, "/departmentOpt")
 # api_script.add_resource(GetUsers, '/getUsers')
-api_script.add_resource(GetUserInfo,"/getUserInfo")
+api_script.add_resource(GetUserInfo, "/getUserInfo")
+api_script.add_resource(GetDepartInfo, "/getDepartInfo")

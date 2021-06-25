@@ -20,6 +20,7 @@ class Base(db.Model):
     """
     model 基类
     """
+
     DELETE_STATUS = 0
     __abstract__ = True
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -76,6 +77,7 @@ class User(Base):
     """
     用户类
     """
+
 
     __tablename__ = "user"
     account = db.Column(db.String(20), comment="用户名")

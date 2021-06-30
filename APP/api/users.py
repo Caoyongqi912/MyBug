@@ -167,6 +167,11 @@ class GetUserInfo(Resource):
         user = g.user.getInfo()
         return jsonify(myResponse(SUCCESS, user, OK))
 
+    @auth.login_required
+    def get(self):
+        user = g.user.getInfo()
+        return jsonify(myResponse(SUCCESS, user, OK))
+
 
 api_script = Api(myBug)
 api_script.add_resource(Login, "/login")

@@ -29,11 +29,12 @@ class Login(Resource):
             res = user.verify_password(password)
             if res:
                 token = user.generate_auth_token().decode("ascii")
-
                 # 发送信号
                 login_signal.send(username=account)
+                info = user.getInfo()
+                info['token'] = token
 
-                return jsonify(myResponse(SUCCESS, token, OK))
+                return jsonify(myResponse(SUCCESS, info, OK))
             else:
                 return jsonify(myResponse(1, None, "err password"))
         return jsonify(myResponse(ERROR, None, ERROR_ACCOUNT))

@@ -126,7 +126,7 @@ class User(Base):
                 "name": user.name,
                 "department": user.department,
                 "ctime": user.create_time,
-                "role": "admin " if user.admin else "editor"
+                "role": 1 if user.admin else 0
             }
             return info
 

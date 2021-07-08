@@ -135,7 +135,7 @@ class User(Base):
         return self.name
 
     def getInfo(self):
-        return {"id": self.id, "name": self.name, "department": self.department,
+        return {"id": self.id, "name": self.name, "department": self.department,"account":self.account,
                 "ctime": self.create_time, "role": "admin" if self.admin else "editor"}
 
     def is_superuser(self) -> bool:

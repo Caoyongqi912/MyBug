@@ -27,22 +27,22 @@ def logWrite():
 
 @myBug.app_errorhandler(404)
 def page_not_found(e):
-    return jsonify(dict(err="请求的地址有点问题,再康康")), 404
+    return jsonify({"code": 404, "data": "", 'msg': '没权限啊铁汁'}), 200
 
 
 @myBug.app_errorhandler(500)
 def host_err(e):
-    return jsonify(dict(err="服务器有点问题,再康康")), 500
+    return jsonify({"code": 500, "data": "", 'msg': '没权限啊铁汁'}), 200
 
 
 @myBug.app_errorhandler(403)
 def host_err(e):
-    return jsonify(dict(err="有问题啊,再康康吧")), 500
+    return jsonify({"code": 403, "data": "", 'msg': '没权限啊铁汁'}), 200
 
 
 @auth.error_handler
 def unauthorized():
-    return jsonify(dict(err="请求没有权限啊,在康康")), 401
+    return jsonify({"code": 401, "data": "", 'msg': '没权限啊铁汁'}), 200
 
 
 @auth.verify_password
@@ -64,11 +64,10 @@ def is_admin(func):
         try:
             if not g.user.is_superuser():
                 return make_response(
-                    jsonify({"code": 1, 'err': '没权限啊铁汁'}), 403)
+                    jsonify({"code": 1, "data":"",'meg': '没权限啊铁汁'}), 200)
             return func(*args, **kwargs)
         except KeyError:
             return make_response(
-                jsonify({"code": 1, 'err': '没权限啊铁汁'}), 403)
+                jsonify({"code": 1,"data":"", 'meg': '没权限啊铁汁'}), 403)
 
     return wrap_func
-

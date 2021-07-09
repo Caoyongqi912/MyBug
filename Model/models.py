@@ -196,6 +196,7 @@ class Project(Base):
         else:
             info = {
                 "name": pro.name,
+                "product": cls.product_records
             }
             return info
 

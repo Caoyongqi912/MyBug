@@ -159,8 +159,12 @@ class MyRequest:
 
 
         print(rep)
+
+    def getProject(self):
+        rep = self.go(method="GET",url="api/projectOpt")
+        print(rep.json())
 if __name__ == '__main__':
     m = MyRequest()
 
 
-    m.login()
+    m.getProject()

@@ -77,9 +77,6 @@ class ProductOpt(Resource):
         pid = parse.parse_args().get("productId")
         try:
             if pid:
-                ps = Product.query.get(pid)
-                if not ps:
-                    return jsonify(myResponse(ERROR, None, f"{pid}  错误或不存在"))
                 ps = [Product.get(pid, "productId")]
             else:
                 ps = Product.all()
@@ -512,11 +509,17 @@ class ProjectOpt(Resource):
     @auth.login_required
     def get(self) -> jsonify:
         parse = MyParse()
-        parse.add(name='projectId', required=True)
-        p = Project.get(parse.parse_args().get("projectId"), 'projectId')
+        parse.add(name='projectId', required=False, location="args")
+        pid = parse.parse_args().get("projectId")
         try:
-            e = [i.name for i in p.product]
-            return jsonify(myResponse(SUCCESS, e, OK))
+            if pid:
+                p = [Project.get(pid, "projectId")]
+            else:
+                p = Project.all()
+            info = [
+                {"id": i.id, "name": i.name, "product": [j.name for j in i.product_records]}
+                for i in p]
+            return jsonify(myResponse(SUCCESS, info, OK))
         except Exception as e:
             log.error(e)
             return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))

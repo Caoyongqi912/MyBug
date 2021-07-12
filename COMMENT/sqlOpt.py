@@ -8,7 +8,7 @@ from flask_restful import abort
 from APP import create_app
 from sqlalchemy import create_engine
 
-from COMMENT.const import SQL_PARAM_ERROR
+from COMMENT.const import errorValue, ResponseCode
 from COMMENT.myResponse import myResponse
 from COMMENT.Log import get_log
 
@@ -40,7 +40,8 @@ class SqlOpt:
 
         for param in params:
             s = " ".join(
-                [param.get("key"), param.get("condition").upper(), f' "' + str(param.get('val')) + '" ' + f"{param.get('opt')} ".upper()])
+                [param.get("key"), param.get("condition").upper(),
+                 f' "' + str(param.get('val')) + '" ' + f"{param.get('opt')} ".upper()])
             sql += s
         sql = sql.rstrip(f"AND ").rstrip("OR ")
         return self._doSelect(sql, limit)
@@ -143,13 +144,12 @@ class SqlOpt:
     def _verify(self, body: list) -> list:
         for param in body:
             if not param.get("key") and not param.get("condition") and not param.get("val") and not param.get("opt"):
-                abort(myResponse(SQL_PARAM_ERROR, None, "invalid params"))
+                abort(myResponse(ResponseCode.SQL_PARAM_ERROR, None, errorValue("")))
             if param.get("condition") not in self.conditions:
-                abort(myResponse(SQL_PARAM_ERROR, None, f"condition: {param.get('condition')}  is  invalid "))
+                abort(myResponse(ResponseCode.SQL_PARAM_ERROR, None, errorValue(param.get('condition'))))
             if param.get("condition") == "like":
                 param['val'] = f"%{param['val']}%"
             if param.get("opt") not in self.opts:
-                abort(myResponse(SQL_PARAM_ERROR, None, f"opt: {param.get('opt')}  is  invalid "))
+                abort(myResponse(ResponseCode.SQL_PARAM_ERROR, None, errorValue(param.get('opt'))))
 
         return body
-

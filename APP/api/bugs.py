@@ -4,10 +4,8 @@
 # @Author  : cyq
 # @File    : bugs.py
 
-from flask_restful import Api, Resource, marshal_with
-from sqlalchemy.orm import session
-
-from APP import auth, create_app
+from flask_restful import Api, Resource
+from APP import auth
 from flask import g, jsonify, request
 from COMMENT.const import *
 from Model.models import *
@@ -22,8 +20,6 @@ log = get_log(__file__)
 
 
 class MyBugs(Resource):
-
-
 
     @auth.login_required
     def post(self) -> jsonify:
@@ -64,11 +60,13 @@ class MyBugs(Resource):
             User.get(assignedTo, "assignedTo")
 
         if product not in project.product_records:
-            return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
+            return jsonify(
+                myResponse(ResponseCode.Error_Relation, None, f"Project： Not included productId {productId}"))
         if platformId not in [i.id for i in product.platforms_records]:
-            return jsonify(myResponse(Error_Relation, None, f"Product： Not included platformId {platformId}"))
+            return jsonify(
+                myResponse(ResponseCode.Error_Relation, None, f"Product： Not included platformId {platformId}"))
         if buildId not in [i.id for i in product.builds_records]:
-            return jsonify(myResponse(Error_Relation, None, f"Product： Not included buildId {buildId}"))
+            return jsonify(myResponse(ResponseCode.Error_Relation, None, f"Product： Not included buildId {buildId}"))
 
         try:
             u = Bugs(title=title, creater=g.user.id, stepsBody=stepsBody, product=productId, build=buildId)
@@ -76,10 +74,10 @@ class MyBugs(Resource):
             u.level = level
             u.createrName = g.user.name
             u.save()
-            return jsonify(myResponse(SUCCESS, u.id, "ok"))
+            return jsonify(myResponse(ResponseCode.SUCCESS, u.id, ResponseError.OK))
         except ErrorType as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, str(e)))
+            return jsonify(myResponse(ResponseCode.ERROR, None, str(e)))
 
     @auth.login_required
     def put(self) -> jsonify:
@@ -110,20 +108,24 @@ class MyBugs(Resource):
 
         if projectId or productId:
             if not productId:
-                return jsonify(myResponse(ERROR, None, cantEmpty("productId")))
+                return jsonify(myResponse(ResponseCode.ERROR, None, cantEmpty("productId")))
             if not projectId:
-                return jsonify(myResponse(ERROR, None, cantEmpty("projectId")))
+                return jsonify(myResponse(ResponseCode.ERROR, None, cantEmpty("projectId")))
             project = Project.get(projectId, "projectId")
             product = Product.get(productId, "productId")
             if product not in project.product_records:
-                return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
+                return jsonify(
+                    myResponse(ResponseCode.Error_Relation, None, f"Project： Not included productId {productId}"))
             if product not in project.product_records:
-                return jsonify(myResponse(Error_Relation, None, f"Project： Not included productId {productId}"))
+                return jsonify(
+                    myResponse(ResponseCode.Error_Relation, None, f"Project： Not included productId {productId}"))
             if platformId not in [i.id for i in product.platforms_records]:
-                return jsonify(myResponse(Error_Relation, None, f"Product： Not included platformId {platformId}"))
+                return jsonify(
+                    myResponse(ResponseCode.Error_Relation, None, f"Product： Not included platformId {platformId}"))
 
             if buildId not in [i.id for i in product.builds_records]:
-                return jsonify(myResponse(Error_Relation, None, f"Product： Not included buildId {buildId}"))
+                return jsonify(
+                    myResponse(ResponseCode.Error_Relation, None, f"Product： Not included buildId {buildId}"))
 
         if mailTo:
             User.get(mailTo, "mailTo")
@@ -135,7 +137,7 @@ class MyBugs(Resource):
         bug.updaterName = g.user.name
         bug.updateBug(parse.parse_args())
 
-        return jsonify(myResponse(SUCCESS, bug.id, OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bug.id, ResponseError.OK))
 
     @auth.login_required
     @is_admin
@@ -146,7 +148,7 @@ class MyBugs(Resource):
         bug = Bugs.get(bugID, "bugID")
         bug.delete()
 
-        return jsonify(myResponse(0, None, "ok"))
+        return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
 
 
 class BugLists(Resource):
@@ -156,7 +158,7 @@ class BugLists(Resource):
         par = MyParse()
         par.add(name="productID", required=True, location="args")
         bugInfo = Product.getBugs(par.parse_args().get("productID"), "productID")
-        return jsonify(myResponse(SUCCESS, bugInfo, OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bugInfo, ResponseError.OK))
 
 
 class MyBug(Resource):
@@ -168,7 +170,7 @@ class MyBug(Resource):
         bugID = parse.parse_args().get("bugID")
         bug = Bugs.get(bugID, "bugID", obj=False)
 
-        return jsonify(myResponse(0, bug, "ok"))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bug, ResponseError.OK))
 
     @auth.login_required
     @is_admin
@@ -182,7 +184,7 @@ class MyBug(Resource):
 
         bug = Bugs.get(parse.parse_args().get("bugID"), "bugID")
         bug.delete()
-        return jsonify(myResponse(0, None, "ok"))
+        return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
 
 
 class Confirmed(Resource):
@@ -206,7 +208,7 @@ class Confirmed(Resource):
         bug = Bugs.get(bugID, "bugID")
         bug.update(parse.parse_args())
 
-        return jsonify(myResponse(0, bug.id, "ok"))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bug.id, ResponseError.OK))
 
 
 class Assigned(Resource):
@@ -235,7 +237,7 @@ class Assigned(Resource):
             no = Note(bugID, note, g.user.id)
             no.save()
 
-        return jsonify(myResponse(0, bug.id, "ok"))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bug.id, ResponseError.OK))
 
 
 class CloseBug(Resource):
@@ -264,7 +266,7 @@ class CloseBug(Resource):
             no = Note(bugID, note, g.user.id)
             no.save()
 
-        return jsonify(myResponse(0, bug.id, "ok"))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bug.id, ResponseError.OK))
 
 
 class CopyBug(Resource):
@@ -281,7 +283,7 @@ class CopyBug(Resource):
         parse.add(name="bugID", type=int, required=True)
         bugID = parse.parse_args().get("bugID")
         bug = Bugs.get(bugID, "bugID", obj=False)
-        return jsonify(myResponse(SUCCESS, bug, OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bug, ResponseError.OK))
 
 
 class SearchBug(Resource):
@@ -340,7 +342,7 @@ class SearchBug(Resource):
         } for info in
             SearchParamsParse(parse.parse_args().get("searchBody"), parse.parse_args().get("option")).filter()]
 
-        return jsonify(myResponse(0, bugInfos, "ok"))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bugInfos, ResponseError.OK))
 
     @auth.login_required
     def get(self) -> jsonify:
@@ -366,7 +368,7 @@ class SearchBug(Resource):
             "updater": bug.updater,
             "solutionID": bug.solution
         } for bug in Bugs.optGetBugInfos(parse.parse_args().get("opt"))]
-        return jsonify(myResponse(0, infos, 'ok'))
+        return jsonify(myResponse(ResponseCode.SUCCESS, infos, ResponseError.OK))
 
 
 class GroupSearch(Resource):
@@ -394,7 +396,7 @@ class GroupSearch(Resource):
             "solutionID": info[14]
         } for info in SqlOpt("bugs").select(parse.parse_args().get("group"))]
 
-        return jsonify(myResponse(0, bugInfos, 'ok'))
+        return jsonify(myResponse(ResponseCode.SUCCESS, bugInfos, ResponseCode.OK))
 
 
 class Files(Resource):
@@ -407,9 +409,9 @@ class Files(Resource):
         file = request.files.get('file')
 
         if not file:
-            return jsonify(myResponse(ERROR, None, NO_FIlE))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.NO_FIlE))
         if not bugID:
-            return jsonify(myResponse(ERROR, None, cantEmpty("bugID")))
+            return jsonify(myResponse(ResponseCode.ERROR, None, cantEmpty("bugID")))
         Bugs.get(bugID, 'bugID')
 
         fileName = secure_filename(file.filename)
@@ -420,10 +422,10 @@ class Files(Resource):
         try:
             file.save(filePath)
             bf.save()
-            return jsonify(myResponse(SUCCESS, bf.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, bf.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseCode.ERROR_TRY_AGAIN))
 
 
 @myBug.route("/getFile", methods=["GET"])
@@ -448,7 +450,7 @@ def delFile() -> jsonify:
     import os
     os.remove(filePath)
     bug.delete()
-    return jsonify(myResponse(SUCCESS, None, OK))
+    return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
 
 
 @myBug.route("/putFileName", methods=["POST"])
@@ -469,10 +471,10 @@ def putFile() -> jsonify:
         file.fileName = fileNewName
         file.filePath = fileNewPath
         os.rename(fileOldPath, fileNewPath)
-        return jsonify(myResponse(SUCCESS, file.id, OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, file.id, ResponseError.OK))
     except Exception as e:
         log.error(e)
-        return jsonify(myResponse(ERROR, None, e))
+        return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 api_script = Api(myBug)

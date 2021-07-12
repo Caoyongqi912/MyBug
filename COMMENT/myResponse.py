@@ -4,8 +4,10 @@
 # @Author  : cyq
 # @File    : myResponse.py
 
+from .const import ResponseCode
 
-def myResponse(code, data, msg):
+
+def myResponse(code: ResponseCode, data, msg):
     return {"code": code, "data": data, "msg": msg}
 
 
@@ -16,6 +18,6 @@ def catchError(func):
             return u
         except Exception as e:
             result = repr(e)
-            return myResponse(1, None, result)
+            return myResponse(ResponseCode.ERROR, None, result)
 
     return wrapper

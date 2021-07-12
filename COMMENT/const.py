@@ -5,20 +5,29 @@
 # @File    : const.py
 from Model.models import *
 
+from enum import Enum
 
 
-SUCCESS = 0
-ERROR = 1
-Error_Relation = 21
-UNIQUE = 31
-TypeError = 44
-SQL_ERROR = 93
-SQL_PARAM_ERROR = 99
+class ResponseCode(Enum):
+    SUCCESS = 0
+    ERROR = 1
+    Error_Relation = 21
+    UNIQUE = 31
+    TypeError = 44
+    SQL_ERROR = 93
+    SQL_PARAM_ERROR = 99
 
-OK = "ok"
-ERROR_ACCOUNT = 'err account'
-SOME_ERROR_TRY_AGAIN = "some error try again"
-NO_FIlE = "no file upload"
+
+class ResponseError(Enum):
+    OK = "OK"
+    ERROR_ACCOUNT = "ERROR ACCOUNT"
+    SOME_ERROR_TRY_AGAIN = "SOME ERROR TRY AGAIN"
+    NO_FIlE = "NO FIlE"
+    INVALID_PARAMS = "INVALID PARAMS"
+
+
+def alreadyExists(name):
+    return f"name:{name} already exists "
 
 
 def cantEmpty(name: str) -> str:
@@ -26,11 +35,11 @@ def cantEmpty(name: str) -> str:
 
 
 def errorType(name: str) -> str:
-    return f"{name} error type"
+    return f"{name} INVALID TYPE"
 
 
 def errorValue(name: str) -> str:
-    return f"{name} error value "
+    return f"{name} INVALID VALUE "
 
 
 SearchOpt = {
@@ -40,4 +49,3 @@ SearchOpt = {
     4: User,
     5: Build
 }
-

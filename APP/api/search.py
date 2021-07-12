@@ -28,7 +28,7 @@ class Search(Resource):
 
         opt = parse.parse_args().get("opt")
         id = parse.parse_args().get("searchID")
-        return jsonify(myResponse(SUCCESS, SearchOpt[opt].get(id,"searchID",obj=False), OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, SearchOpt[opt].get(id,"searchID",obj=False), ResponseError.OK))
 
 
 api_script = Api(myBug)

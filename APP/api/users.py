@@ -34,10 +34,10 @@ class Login(Resource):
                 info = user.getInfo()
                 info['token'] = token
 
-                return jsonify(myResponse(SUCCESS, info, OK))
+                return jsonify(myResponse(ResponseCode.ResponseCode.SUCCESS, info, ResponseError.OK))
             else:
                 return jsonify(myResponse(1, None, "err password"))
-        return jsonify(myResponse(ERROR, None, ERROR_ACCOUNT))
+        return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.ERROR_ACCOUNT))
 
 
 @myBug.route("/getToken", methods=["POST"])
@@ -79,7 +79,7 @@ class Register(Resource):
         u = User(account=account, name=name, password=password, gender=gender, department=departmentId, admin=admin)
         u.save()
 
-        return jsonify(myResponse(SUCCESS, u.id, OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, u.id, ResponseError.OK))
 
 
 class DepartmentOpt(Resource):
@@ -98,12 +98,12 @@ class DepartmentOpt(Resource):
         try:
             d = Department(name=name)
             d.save()
-            return jsonify(myResponse(SUCCESS, d.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, d.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
             db.session.rollback()
 
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -121,11 +121,11 @@ class DepartmentOpt(Resource):
         try:
             d.name = name
             d.save()
-            return jsonify(myResponse(SUCCESS, d.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, d.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
             db.session.rollback()
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -140,11 +140,11 @@ class DepartmentOpt(Resource):
         d = Department.get(parse.parse_args().get("id"), 'departmentId')
         try:
             d.delete()
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
         except Exception as e:
             log.error(e)
             db.session.rollback()
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 class GetDepartInfo(Resource):
@@ -155,7 +155,7 @@ class GetDepartInfo(Resource):
         par.add(name="departmentId", required=True, location="args")
         d = Department.get(par.parse_args().get("departmentId"), 'departmentId')
         dInfo = {"name": d.name}
-        return jsonify(myResponse(SUCCESS, dInfo, OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, dInfo, ResponseError.OK))
 
 
 class GetUserInfo(Resource):
@@ -166,12 +166,12 @@ class GetUserInfo(Resource):
         :return:
         """
         user = g.user.getInfo()
-        return jsonify(myResponse(SUCCESS, user, OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, user, ResponseError.OK))
 
     @auth.login_required
     def get(self):
         user = g.user.getInfo()
-        return jsonify(myResponse(SUCCESS, user, OK))
+        return jsonify(myResponse(ResponseCode.SUCCESS, user, ResponseError.OK))
 
 
 api_script = Api(myBug)

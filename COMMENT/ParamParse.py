@@ -37,29 +37,29 @@ class MyParse:
         :return:
         """
         if self.body is None:
-            abort(myResponse(ERROR, None, "request body cant be empty"))
+            abort(myResponse(ResponseCode.ERROR, None, "request body cant be empty"))
 
         for kw in self.args:
             if kw['required'] is True:
                 if not self.body.get(kw['name']) or self.body.get(kw['name']) == "":
-                    abort(myResponse(TypeError, None, cantEmpty(kw['name'])))
+                    abort(myResponse(ResponseCode.ERROR, None, cantEmpty(kw['name'])))
 
                 # 类型判读
                 if not isinstance(self.body[kw['name']], kw['type']):
-                    abort(myResponse(TypeError, None, errorType(kw['name'])))
+                    abort(myResponse(ResponseCode.ERROR, None, errorType(kw['name'])))
                 # choice 判断
                 if kw.get('choices'):
                     if self.body[kw['name']] not in kw['choices']:
-                        abort(myResponse(TypeError, None, errorValue(kw['name'])))
+                        abort(myResponse(ResponseCode.ERROR, None, errorValue(kw['name'])))
             else:
                 if self.body.get(kw['name']):
                     # 类型判读
                     if not isinstance(self.body[kw['name']], kw['type']):
-                        abort(myResponse(TypeError, None, f"{kw['name']}: error type"))
+                        abort(myResponse(ResponseCode.ERROR, None,errorType(kw['name'])))
                     # choice 判断
                     if kw.get('choices'):
                         if self.body[kw['name']] not in kw['choices']:
-                            abort(myResponse(TypeError, None, f"{kw['name']}: error value"))
+                            abort(myResponse(ResponseCode.ERROR, None,errorValue(kw['name'])))
 
                 if kw.get("default") and self.body.get(kw['name']) is None:
                     self.body[kw['name']] = kw.get('default')
@@ -91,9 +91,9 @@ class SearchParamsParse:
     def _verify(self, body: list) -> list:
         for b in body:
             if not b.get("key") and not b.get("condition") and not b.get("val"):
-                abort(myResponse(SQL_PARAM_ERROR, None, "invalid params"))
+                abort(myResponse(ResponseCode.SQL_PARAM_ERROR, None, ResponseError.INVALID_PARAMS))
             if b.get("condition") not in self.condition:
-                abort(myResponse(SQL_PARAM_ERROR, None, f"{b.get('condition')}  is  invalid "))
+                abort(myResponse(ResponseCode.SQL_PARAM_ERROR, None, errorValue(b.get('condition'))))
 
         return body
 
@@ -117,7 +117,7 @@ class SearchParamsParse:
             return res.fetchall()
         except Exception as e:
 
-            abort(myResponse(SQL_ERROR, None, SOME_ERROR_TRY_AGAIN))
+            abort(myResponse(ResponseCode.SQL_ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 if __name__ == '__main__':

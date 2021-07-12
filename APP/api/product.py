@@ -63,12 +63,12 @@ class ProductOpt(Resource):
                     Module.verify_name(m)
                     Module(name=m, productId=pro.id).save()
 
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
 
         except Exception as e:
             log.error(e)
             db.session.rollback()
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     def get(self) -> jsonify:
@@ -90,11 +90,10 @@ class ProductOpt(Resource):
                  "modules": [{'module_name': m.name, "id": m.id} for m in i.modules_records]
                  }
                 for i in ps]
-            return jsonify(myResponse(SUCCESS, productInfo, OK))
-
+            return jsonify(myResponse(ResponseCode.SUCCESS, productInfo, ResponseError.OK))
         except Exception as e:
             log.exception(e)
-            return jsonify(dict(code=ERROR, data="", err=f"错误:{str(e)}"))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -109,17 +108,17 @@ class ProductOpt(Resource):
         pro = Product.get(Id, 'productId')
         Product.verify_name(name)
         if not pro:
-            return jsonify(myResponse(ERROR, None, f"{Id}  错误或不存在"))
+            return jsonify(myResponse(ResponseCode.ERROR, None, cantEmpty(Id)))
 
         else:
             try:
                 pro.name = name
                 db.session.commit()
-                return jsonify(myResponse(SUCCESS, name, OK))
+                return jsonify(myResponse(ResponseCode.SUCCESS, name, ResponseError.OK))
             except ErrorType as e:
                 log.error(f"{__class__} {e}")
                 db.session.rollback()
-                return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+                return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -130,9 +129,10 @@ class ProductOpt(Resource):
         p = Product.get(ID, 'productId')
         try:
             p.delete()
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
         except Exception as e:
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            log.error(e)
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 class SolutionOpt(Resource):
@@ -146,10 +146,10 @@ class SolutionOpt(Resource):
 
         try:
             s = [{"id": i.id, "name": i.name} for i in p.solutions_records]
-            return jsonify(myResponse(SUCCESS, s, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, s, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -167,16 +167,16 @@ class SolutionOpt(Resource):
         s = Solution.get(sid, "solutionId")
 
         if s not in p.solutions_records:
-            return jsonify(myResponse(Error_Relation, None, f"Product:{pid}  Not included {sid}"))
+            return jsonify(myResponse(ResponseCode.Error_Relation, None, f"Product:{pid}  Not included {sid}"))
 
         # 验证同一 product name唯一
         if name in [i.name for i in p.solutions_records]:
-            return jsonify(myResponse(Error_Relation, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.Error_Relation, None, alreadyExists(name)))
 
         s.name = name
         s.save()
 
-        return jsonify(SUCCESS, s.id, OK)
+        return jsonify(ResponseCode.SUCCESS, s.id, ResponseError.OK)
 
     @auth.login_required
     @is_admin
@@ -192,15 +192,15 @@ class SolutionOpt(Resource):
 
         # 验证同一 product name唯一
         if name in [i.name for i in p.solutions_records]:
-            return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
 
         try:
             s = Solution(name, pid)
             s.save()
-            return jsonify(myResponse(SUCCESS, s.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, s.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -212,10 +212,10 @@ class SolutionOpt(Resource):
         s = Solution.get(id, "solutionId")
         try:
             s.delete()
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
         except ErrorType as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 class PlatformOpt(Resource):
@@ -228,10 +228,10 @@ class PlatformOpt(Resource):
         p = Product.get(pid, 'productId')
         try:
             s = [{"platform_name": i.name, "id": i.id} for i in p.platforms_records]
-            return jsonify(myResponse(SUCCESS, s, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, s, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -246,13 +246,13 @@ class PlatformOpt(Resource):
         p = Product.get(pid, 'productId')
         pl = Platform.get(pld, 'platformId')
         if pl not in p.platforms_records:
-            return jsonify(myResponse(Error_Relation, None, f"Product:{pid}  Not included {pld}"))
+            return jsonify(myResponse(ResponseCode.Error_Relation, None, f"Product:{pid}  Not included {pld}"))
         # 验证同一 product name唯一
         if name in [i.name for i in p.platforms_records]:
-            return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
         pl.name = name
         pl.save()
-        return jsonify(SUCCESS, pl.id, OK)
+        return jsonify(myResponse(ResponseCode.SUCCESS, pl.id, ResponseError.ResponseError.OK))
 
     @auth.login_required
     @is_admin
@@ -267,14 +267,14 @@ class PlatformOpt(Resource):
         p = Product.get(pid, 'productId')
         # 验证同一 product name唯一
         if name in [i.name for i in p.platforms_records]:
-            return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
         try:
             p = Platform(name, pid)
             p.save()
-            return jsonify(myResponse(SUCCESS, p.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, p.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -285,10 +285,10 @@ class PlatformOpt(Resource):
         p = Platform.get(id, 'platformId')
         try:
             p.delete()
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 class BuildOpt(Resource):
@@ -301,10 +301,10 @@ class BuildOpt(Resource):
         p = Product.get(pid, 'productId')
         try:
             b = [{"build_name": i.name, "id": i.id} for i in p.builds_records]
-            return jsonify(myResponse(SUCCESS, b, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, b, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -319,13 +319,13 @@ class BuildOpt(Resource):
         p = Product.get(pid, 'productId')
         b = Build.get(bid, "buildId")
         if b not in p.builds_records:
-            return jsonify(myResponse(Error_Relation, None, f"Product:{pid}  Not included {bid}"))
+            return jsonify(myResponse(ResponseCode.Error_Relation, None, f"Product:{pid}  Not included {bid}"))
             # 验证同一 product name唯一
         if name in [i.name for i in p.builds_records]:
-            return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
         b.name = name
         b.save()
-        return jsonify(SUCCESS, b.id, OK)
+        return jsonify(myResponse(ResponseCode.SUCCESS, b.id, ResponseError.ResponseError.OK))
 
     @auth.login_required
     @is_admin
@@ -340,14 +340,14 @@ class BuildOpt(Resource):
         p = Product.get(pid, 'productId')
         # 验证同一 product name唯一
         if name in [i.name for i in p.builds_records]:
-            return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
         try:
             b = Build(name, pid, g.user.name, desc)
             b.save()
-            return jsonify(myResponse(SUCCESS, b.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, b.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -358,10 +358,10 @@ class BuildOpt(Resource):
         b = Build.get(id, 'buildId')
         try:
             b.delete()
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 class ErrorTypeOpt(Resource):
@@ -374,10 +374,10 @@ class ErrorTypeOpt(Resource):
         p = Product.get(pid, 'productId')
         try:
             e = [i.name for i in p.errorTypes_records]
-            return jsonify(myResponse(SUCCESS, e, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, e, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -392,12 +392,12 @@ class ErrorTypeOpt(Resource):
         p = Product.get(pid, 'productId')
         e = ErrorType.get(eid, 'errorId')
         if e not in p.errorTypes_records:
-            return jsonify(myResponse(21, None, f"Product:{pid}  Not included {eid}"))
+            return jsonify(myResponse(ResponseCode.Error_Relation, None, f"Product:{pid}  Not included {eid}"))
         if name in [i.name for i in p.builds_records]:
-            return jsonify(myResponse(31, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
         e.name = name
         e.save()
-        return jsonify(SUCCESS, e.id, OK)
+        return jsonify(myResponse(ResponseCode.SUCCESS, e.id, ResponseError.ResponseError.OK))
 
     @auth.login_required
     @is_admin
@@ -410,14 +410,14 @@ class ErrorTypeOpt(Resource):
         p = Product.get(pid, 'productId')
 
         if name in [i.name for i in p.errorTypes_records]:
-            return jsonify(myResponse(31, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
         try:
             e = ErrorType(name, pid)
             e.save()
-            return jsonify(myResponse(SUCCESS, e.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, e.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -428,10 +428,10 @@ class ErrorTypeOpt(Resource):
         e = ErrorType.get(id, 'errorId')
         try:
             e.delete()
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 class ModuleOpt(Resource):
@@ -444,10 +444,10 @@ class ModuleOpt(Resource):
         p = Product.get(pid, 'productId')
         try:
             e = [i.name for i in p.modules_records]
-            return jsonify(myResponse(SUCCESS, e, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, e, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -460,14 +460,14 @@ class ModuleOpt(Resource):
         p = Product.get(pid, 'productId')
 
         if name in [i.name for i in p.modules_records]:
-            return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
         try:
             m = Module(name, pid)
             m.save()
-            return jsonify(myResponse(SUCCESS, m.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, m.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -478,10 +478,10 @@ class ModuleOpt(Resource):
         e = Module.get(parse.parse_args().get("moduleId"), 'moduleId')
         try:
             e.delete()
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -496,12 +496,12 @@ class ModuleOpt(Resource):
         p = Product.get(pid, 'productId')
         e = Module.get(mid, 'moduleId')
         if e not in p.modules_records:
-            return jsonify(myResponse(Error_Relation, None, f"Product:{pid}  Not included {mid}"))
+            return jsonify(myResponse(ResponseCode.Error_Relation, None, f"Product:{pid}  Not included {mid}"))
         if name in [i.name for i in p.modules_records]:
-            return jsonify(myResponse(UNIQUE, None, f"name:{name} already exists "))
+            return jsonify(myResponse(ResponseCode.UNIQUE, None, alreadyExists(name)))
         e.name = name
         e.save()
-        return jsonify(SUCCESS, e.id, OK)
+        return jsonify(myResponse(ResponseCode.SUCCESS, e.id, ResponseError.ResponseError.OK))
 
 
 class ProjectOpt(Resource):
@@ -519,10 +519,10 @@ class ProjectOpt(Resource):
             info = [
                 {"id": i.id, "name": i.name, "product": [j.name for j in i.product_records]}
                 for i in p]
-            return jsonify(myResponse(SUCCESS, info, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, info, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -534,10 +534,10 @@ class ProjectOpt(Resource):
         try:
             p = Project(name)
             p.save()
-            return jsonify(myResponse(SUCCESS, p.id, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, p.id, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
     @auth.login_required
     @is_admin
@@ -547,10 +547,10 @@ class ProjectOpt(Resource):
         id = parse.parse_args().get("projectId")
         try:
             Project.get(id, 'projectId').delete()
-            return jsonify(myResponse(SUCCESS, None, OK))
+            return jsonify(myResponse(ResponseCode.SUCCESS, None, ResponseError.OK))
         except Exception as e:
             log.error(e)
-            return jsonify(myResponse(ERROR, None, SOME_ERROR_TRY_AGAIN))
+            return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.SOME_ERROR_TRY_AGAIN))
 
 
 api_script = Api(myBug)

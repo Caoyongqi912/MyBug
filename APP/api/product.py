@@ -7,10 +7,13 @@ from flask import g
 from flask_restful import Api, Resource
 from flask import jsonify
 from APP.api import myBug
+from COMMENT.Log import get_log
 from COMMENT.ParamParse import MyParse
+from Model.models import *
 from .errors_or_auth import is_admin
 from APP import auth
 from COMMENT.const import *
+
 
 log = get_log(__file__)
 

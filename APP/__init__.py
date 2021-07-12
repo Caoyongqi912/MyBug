@@ -7,11 +7,12 @@
 
 from flask import Flask
 from COMMENT.config import config
-from COMMENT.AlchemyOpt import MyBugBaseQuery
 from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
 from flask_cors import CORS
+from COMMENT.AlchemyOpt import MyBugBaseQuery
+
 
 db = SQLAlchemy(query_class=MyBugBaseQuery)
 auth = HTTPBasicAuth()

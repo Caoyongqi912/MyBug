@@ -3,7 +3,6 @@
 # @Time    : 2021/3/10 上午9:51
 # @Author  : cyq
 # @File    : const.py
-from Model.models import *
 
 from enum import Enum
 
@@ -24,6 +23,7 @@ class ResponseError(Enum):
     SOME_ERROR_TRY_AGAIN = "SOME ERROR TRY AGAIN"
     NO_FIlE = "NO FIlE"
     INVALID_PARAMS = "INVALID PARAMS"
+    ERROR_PASSWORD = "ERROR PASSWORD"
 
 
 def alreadyExists(name):
@@ -42,10 +42,3 @@ def errorValue(name: str) -> str:
     return f"{name} INVALID VALUE "
 
 
-SearchOpt = {
-    1: Bugs,
-    2: Product,
-    3: Product,
-    4: User,
-    5: Build
-}

@@ -8,7 +8,7 @@
 from flask_restful import abort
 from flask_sqlalchemy import BaseQuery
 from .Log import get_log
-from .const import ResponseCode, errorValue
+from .const import ResponseCode
 from .myResponse import myResponse
 
 log = get_log(__name__)
@@ -29,7 +29,12 @@ class MyBugBaseQuery(BaseQuery):
     def get_or_NoFound(self, ident, name):
         rv = self.get(ident)
         if not rv:
-            abort(400, **myResponse(ResponseCode.ERROR, None, errorValue(name)))
+            abort(400, **myResponse(ResponseCode.ERROR, None, f"{name}: {ident} non-existent "))
         elif rv.status == 0:
-            abort(400, **myResponse(ResponseCode.ERROR, None, errorValue(name)))
+            abort(400, **myResponse(ResponseCode.ERROR, None, f"{name}: {ident} Deleted"))
         return rv
+
+
+
+
+

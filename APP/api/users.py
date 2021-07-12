@@ -8,6 +8,9 @@
 from flask import jsonify, g
 from flask_restful import Resource, Api
 from APP import auth
+from COMMENT.Log import get_log
+from COMMENT.myResponse import myResponse
+from Model.models import *
 from .errors_or_auth import is_admin
 from APP.api import myBug
 from COMMENT.myBlinker import login_signal
@@ -34,9 +37,9 @@ class Login(Resource):
                 info = user.getInfo()
                 info['token'] = token
 
-                return jsonify(myResponse(ResponseCode.ResponseCode.SUCCESS, info, ResponseError.OK))
+                return jsonify(myResponse(ResponseCode.SUCCESS, info, ResponseError.OK))
             else:
-                return jsonify(myResponse(1, None, "err password"))
+                return jsonify(myResponse(ResponseCode.ERROR, None, "err password"))
         return jsonify(myResponse(ResponseCode.ERROR, None, ResponseError.ERROR_ACCOUNT))
 
 

@@ -4,12 +4,12 @@
 # @Author  : cyq
 # @File    : models.py
 
+from APP import db
 import time
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_restful import current_app, abort
 from sqlalchemy import desc
-from APP import db
 from COMMENT.Log import get_log
 from COMMENT.myResponse import myResponse
 
@@ -577,3 +577,12 @@ class BugModel(Base):
     def __init__(self, name: str, content: str):
         self.name = name
         self.content = content
+
+
+SearchOpt = {
+    1: Bugs,
+    2: Product,
+    3: Project,
+    4: User,
+    5: Build
+}
